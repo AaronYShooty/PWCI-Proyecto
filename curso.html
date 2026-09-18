@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalle del curso | Walter</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <div class="topbar-user">
+      <div class="topbar-user__avatar"></div>
+      <div class="topbar-user__info">
+        <strong>Ana Torres</strong>
+        <span>Estudiante</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html">Registro</a>
+    <a href="curso.html" class="is-active">Detalle de curso</a>
+    <a href="crear-curso.html">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html">Instructor</a>
+    <a href="admin.html">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-curso">
+  <div class="shell">
+
+    <div class="breadcrumb">IT &amp; Software / Programación web</div>
+
+    <div class="course-detail">
+      <div class="course-detail__main">
+        <div class="video-frame">
+          <div class="stripe-corner" style="opacity:.55;"><img src="assets/Fondo.png" alt=""></div>
+          <div class="video-frame__play">▶</div>
+          <span class="video-frame__label">Nivel 1 · Introducción a MVC</span>
+        </div>
+
+        <h1 class="course-detail__title">MVC y arquitectura en tres capas con PHP</h1>
+        <div class="course-detail__meta">
+          <span class="stars">★★★★☆ <span style="color:var(--ink-soft); font-weight:500;">4.3 (64 calificaciones)</span></span>
+          <span>·</span>
+          <span>96 alumnos inscritos</span>
+          <span>·</span>
+          <span>👤 Instructor: F. Islas</span>
+        </div>
+
+        <div class="tabs-row" id="courseTabs">
+          <button class="is-active" data-tab="contenido">Contenido</button>
+          <button data-tab="descripcion">Descripción</button>
+          <button data-tab="comentarios">Comentarios</button>
+        </div>
+
+        <div class="tab-panel is-active" id="tab-contenido">
+          <div class="level-list">
+            <div class="level-row is-done">
+              <span class="level-row__check">✔</span>
+              <div class="level-row__body"><strong>Nivel 1 · Introducción a MVC</strong><span>Video · 12 min</span></div>
+              <span class="pill">Gratis</span>
+            </div>
+            <div class="level-row is-done">
+              <span class="level-row__check">✔</span>
+              <div class="level-row__body"><strong>Nivel 2 · Modelos y acceso a datos</strong><span>Video · 18 min · PDF adjunto</span></div>
+            </div>
+            <div class="level-row is-current">
+              <span class="level-row__check">●</span>
+              <div class="level-row__body"><strong>Nivel 3 · Controladores y enrutamiento</strong><span>Video · 15 min</span></div>
+            </div>
+            <div class="level-row">
+              <span class="level-row__check">○</span>
+              <div class="level-row__body"><strong>Nivel 4 · Vistas y separación de capas</strong><span>Video · 14 min · Enlace externo</span></div>
+            </div>
+            <div class="level-row">
+              <span class="level-row__check">○</span>
+              <div class="level-row__body"><strong>Nivel 5 · Middleware y control de acceso</strong><span>Video · 20 min</span></div>
+            </div>
+            <div class="level-row">
+              <span class="level-row__check">○</span>
+              <div class="level-row__body"><strong>Nivel 6 · Integración con API propia</strong><span>Video · 22 min</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-descripcion">
+          <p style="color:var(--ink-soft); line-height:1.6; max-width:64ch;">Aprende a estructurar un proyecto PHP siguiendo el patrón Modelo-Vista-Controlador, separando el acceso a datos, la lógica de negocio y la presentación en tres capas independientes. Ideal si ya conoces PHP básico y quieres ordenar tus proyectos como en un entorno profesional.</p>
+          <div class="chip-list" style="margin-top:14px;">
+            <span class="pill">PHP puro</span>
+            <span class="pill">POO</span>
+            <span class="pill">MVC</span>
+            <span class="pill">MySQL</span>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-comentarios">
+          <div class="comment-row">
+            <div class="dash-nav__avatar" style="width:34px; height:34px;"></div>
+            <div class="comment-row__body">
+              <div class="comment-row__head"><strong>Ana Torres</strong><span class="stars">★★★★★</span><span class="comment-row__date">28 ago 2026</span></div>
+              <p>Muy claro el manejo del enrutamiento, me sirvió bastante para mi proyecto final.</p>
+            </div>
+          </div>
+          <div class="comment-row">
+            <div class="dash-nav__avatar" style="width:34px; height:34px; background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+            <div class="comment-row__body">
+              <div class="comment-row__head"><strong>Jorge Pérez</strong><span class="stars">★★★★☆</span><span class="comment-row__date">15 ago 2026</span></div>
+              <p>Este comentario fue eliminado por el administrador.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="course-detail__side">
+        <div class="panel">
+          <div class="price" style="font-size:1.6rem;">$499.00</div>
+          <span class="field-hint">Acceso de por vida a los 6 niveles</span>
+          <button class="btn btn--primary" style="width:100%; margin-top:16px;">Comprar curso</button>
+          <button class="btn btn--outline" style="width:100%; margin-top:8px;">Ver nivel 1 gratis</button>
+          <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line); font-size:0.84rem; color:var(--ink-soft); display:flex; flex-direction:column; gap:8px;">
+            <span>📄 6 niveles · con video obligatorio</span>
+            <span>💬 Mensajería directa con el instructor</span>
+            <span>🏅 Diploma al completar el curso</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel__head"><h3 style="font-size:0.95rem;">Instructor</h3></div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+            <div><strong style="display:block; font-size:0.9rem;">Fausto Islas</strong><span style="font-size:0.78rem; color:var(--ink-soft);">12 cursos publicados</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

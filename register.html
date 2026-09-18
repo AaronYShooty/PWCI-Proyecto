@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear cuenta | Walter</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <a href="login.html" class="btn btn--outline btn--sm">Iniciar sesión</a>
+    <a href="register.html" class="btn btn--primary btn--sm">Registrarse</a>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html" class="is-active">Registro</a>
+    <a href="curso.html">Detalle de curso</a>
+    <a href="crear-curso.html">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html">Instructor</a>
+    <a href="admin.html">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-register">
+  <div class="shell" style="max-width: 980px;">
+    <div class="auth-shell">
+      <div class="auth-visual">
+        <div class="stripe-corner" style="opacity:.5;"><img src="assets/Fondo.png" alt=""></div>
+        <div class="auth-visual__top"><img src="assets/Logo_Walter.png" alt="Walter"> Walter</div>
+        <div class="auth-visual__quote">
+          <h2>Aprende a tu ritmo, con instructores reales</h2>
+          <p>Crea tu cuenta gratis para inscribirte a cursos o para empezar a ofrecer los tuyos.</p>
+        </div>
+      </div>
+      <div class="auth-panel">
+        <h2 style="font-size:1.4rem; margin-bottom:22px;">Crea tu cuenta</h2>
+
+        <form class="auth-form is-active" id="form-register">
+          <div class="field">
+            <label>Foto de perfil</label>
+            <div class="avatar-upload">
+              <div class="avatar-upload__preview">🖼️</div>
+              <div class="avatar-upload__actions">
+                <button type="button" class="btn btn--outline btn--sm">Subir foto</button>
+                <span class="field-hint">Obligatoria, tipo avatar (JPG o PNG).</span>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Nombre completo</label>
+            <input type="text" placeholder="Nombre y apellidos">
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <input type="email" placeholder="tu@correo.com">
+          </div>
+          <div style="display:flex; gap:14px;">
+            <div class="field" style="flex:1;">
+              <label>Género</label>
+              <select>
+                <option>Femenino</option>
+                <option>Masculino</option>
+                <option>Otro</option>
+                <option>Prefiero no decir</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1;">
+              <label>Fecha de nacimiento</label>
+              <input type="date">
+            </div>
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <input type="password" placeholder="Mínimo 8 caracteres">
+            <span class="field-hint">Debe incluir una mayúscula, un número y un carácter especial.</span>
+          </div>
+          <div class="field">
+            <label>Quiero registrarme como</label>
+            <div class="role-toggle">
+              <label><input type="radio" name="role" checked style="margin-right:6px;">Estudiante</label>
+              <label><input type="radio" name="role" style="margin-right:6px;">Instructor</label>
+            </div>
+          </div>
+          <button type="button" class="btn btn--primary" style="margin-top:8px;">Crear mi cuenta</button>
+        </form>
+
+        <div class="admin-note">
+          🔒 Las cuentas de <strong>administrador</strong> no se crean desde este formulario. Se asignan directamente en la base de datos por el equipo del portal.
+        </div>
+
+        <p class="auth-switch">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

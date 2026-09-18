@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear curso | Walter</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <div class="topbar-user">
+      <div class="topbar-user__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+      <div class="topbar-user__info">
+        <strong>Fausto Islas</strong>
+        <span>Instructor</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html">Registro</a>
+    <a href="curso.html">Detalle de curso</a>
+    <a href="crear-curso.html" class="is-active">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html">Instructor</a>
+    <a href="admin.html">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-crear-curso">
+  <div class="shell">
+    <div class="dash">
+      <aside class="dash-nav">
+        <div class="dash-nav__user">
+          <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+          <div>
+            <strong>Fausto Islas</strong>
+            <span>Instructor</span>
+          </div>
+        </div>
+        <a>Mis cursos</a>
+        <a>Ventas</a>
+        <a>Mensajes</a>
+        <a class="is-active">Crear curso</a>
+        <a>Cerrar sesión</a>
+      </aside>
+
+      <div class="dash-main">
+        <div class="panel__head" style="margin-bottom:-6px;">
+          <h2 style="font-size:1.3rem;">Crear curso</h2>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn--outline btn--sm">Guardar borrador</button>
+            <button class="btn btn--primary btn--sm">Publicar curso</button>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel" style="display:flex; flex-direction:column; gap:14px;">
+            <div class="field">
+              <label>Título del curso</label>
+              <input type="text" placeholder="Ej. Fundamentos de PHP orientado a objetos">
+            </div>
+            <div class="field">
+              <label>Descripción</label>
+              <textarea rows="4" placeholder="¿Qué aprenderá el alumno en este curso?"></textarea>
+            </div>
+            <div style="display:flex; gap:14px;">
+              <div class="field" style="flex:1;">
+                <label>Categoría</label>
+                <select><option>IT &amp; Software</option><option>Diseño</option><option>Marketing</option><option>Negocios</option></select>
+                <span class="field-hint">Puedes agregar más de una categoría.</span>
+              </div>
+              <div class="field" style="flex:1;">
+                <label>Tipo de precio</label>
+                <select><option>Curso completo con costo</option><option>Cobro por nivel</option><option>Gratis</option></select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Imagen del curso</label>
+              <div class="upload-box">📷 Arrastra una imagen o haz clic para seleccionar</div>
+            </div>
+
+            <div class="panel__head" style="margin-top:10px;">
+              <h3 style="font-size:0.98rem;">Niveles del curso</h3>
+              <button class="btn btn--ghost btn--sm">+ Agregar nivel</button>
+            </div>
+
+            <div class="level-editor">
+              <div class="level-editor__head">
+                <strong>Nivel 1</strong>
+                <label class="field-hint"><input type="checkbox" checked style="margin-right:5px;">Gratis</label>
+              </div>
+              <input type="text" placeholder="Título del nivel" value="Introducción a MVC">
+              <div style="display:flex; gap:10px;">
+                <input type="text" placeholder="Video (obligatorio)" style="flex:1;" value="video-nivel-1.mp4">
+                <input type="text" placeholder="Archivo PDF (opcional)" style="flex:1;">
+              </div>
+            </div>
+            <div class="level-editor">
+              <div class="level-editor__head">
+                <strong>Nivel 2</strong>
+                <label class="field-hint"><input type="checkbox" style="margin-right:5px;">Gratis</label>
+              </div>
+              <input type="text" placeholder="Título del nivel" value="Modelos y acceso a datos">
+              <div style="display:flex; gap:10px;">
+                <input type="text" placeholder="Video (obligatorio)" style="flex:1;" value="video-nivel-2.mp4">
+                <input type="text" placeholder="Enlace externo (opcional)" style="flex:1;">
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head"><h3 style="font-size:0.98rem;">Vista previa</h3></div>
+            <div class="course-card" style="border:1px solid var(--line);">
+              <div class="course-card__thumb"><span>IT &amp; Software</span></div>
+              <div class="course-card__body">
+                <h3>Fundamentos de PHP orientado a objetos</h3>
+                <div class="course-card__meta">👤 Instructor: F. Islas</div>
+                <div class="course-card__footer">
+                  <span class="price">$499.00</span>
+                  <span class="pill">2 niveles</span>
+                </div>
+              </div>
+            </div>
+            <p class="field-hint" style="margin-top:12px;">Así se verá tu curso en la página principal y en los resultados de búsqueda.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel del instructor | Walter</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <div class="topbar-user">
+      <div class="topbar-user__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+      <div class="topbar-user__info">
+        <strong>Fausto Islas</strong>
+        <span>Instructor</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html">Registro</a>
+    <a href="curso.html">Detalle de curso</a>
+    <a href="crear-curso.html">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html" class="is-active">Instructor</a>
+    <a href="admin.html">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-instructor">
+  <div class="shell">
+    <div class="dash">
+      <aside class="dash-nav">
+        <div class="dash-nav__user">
+          <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+          <div>
+            <strong>Fausto Islas</strong>
+            <span>Instructor</span>
+          </div>
+        </div>
+        <a class="is-active" data-tab="mis-cursos">Mis cursos</a>
+        <a data-tab="ventas">Ventas</a>
+        <a data-tab="mensajes">Mensajes</a>
+        <a data-tab="perfil">Mi perfil</a>
+        <a href="login.html">Cerrar sesión</a>
+      </aside>
+
+      <div class="dash-main">
+
+        <div class="dash-tab-panel is-active" id="dashtab-mis-cursos">
+          <div class="panel__head" style="margin-bottom:-6px;">
+            <h2 style="font-size:1.3rem;">Mis cursos</h2>
+            <a href="crear-curso.html" class="btn btn--primary btn--sm">+ Crear curso</a>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-card"><span>Cursos activos</span><strong>5</strong></div>
+            <div class="stat-card"><span>Alumnos inscritos</span><strong>312</strong></div>
+            <div class="stat-card"><span>Ingresos del mes</span><strong>$18,420</strong></div>
+            <div class="stat-card"><span>Calificación promedio</span><strong>4.7</strong></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head"><h3>Mis cursos publicados</h3></div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div class="course-row-card">
+                <div class="course-row-card__thumb"></div>
+                <div class="course-row-card__body">
+                  <h4>MVC y arquitectura en tres capas con PHP</h4>
+                  <span style="font-size:0.8rem; color:var(--ink-soft);">96 alumnos · 6 niveles · Activo</span>
+                </div>
+                <a href="crear-curso.html" class="btn btn--outline btn--sm">Editar</a>
+              </div>
+              <div class="course-row-card">
+                <div class="course-row-card__thumb"></div>
+                <div class="course-row-card__body">
+                  <h4>MySQL: relaciones, llaves e integridad referencial</h4>
+                  <span style="font-size:0.8rem; color:var(--ink-soft);">150 alumnos · 4 niveles · Activo</span>
+                </div>
+                <a href="crear-curso.html" class="btn btn--outline btn--sm">Editar</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head"><h3>Contenido del curso: MVC y arquitectura en tres capas</h3></div>
+            <div class="chip-list">
+              <span class="pill">Nivel 1 · Video ✔</span>
+              <span class="pill">Nivel 2 · Video ✔</span>
+              <span class="pill">Nivel 3 · Video ✔</span>
+              <span class="pill" style="background:#fff3da; color:#b3760a;">Nivel 4 · Falta video</span>
+              <span class="pill" style="background:var(--surface-alt);">+ Agregar nivel</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-ventas">
+          <div class="panel">
+            <div class="panel__head"><h3>Resumen de ventas por curso</h3>
+              <div class="filter-row">
+                <select><option>Categoría: todas</option></select>
+                <select><option>Solo activos</option></select>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Curso</th><th>Alumnos</th><th>Nivel promedio</th><th>Ingresos</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MVC y arquitectura en tres capas con PHP</td>
+                  <td>96</td>
+                  <td>3.4 de 6</td>
+                  <td>$8,940.00</td>
+                  <td><span class="badge badge--ok">Activo</span></td>
+                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
+                </tr>
+                <tr>
+                  <td>MySQL: relaciones, llaves e integridad referencial</td>
+                  <td>150</td>
+                  <td>4.0 de 4</td>
+                  <td>$5,980.00</td>
+                  <td><span class="badge badge--ok">Activo</span></td>
+                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
+                </tr>
+                <tr>
+                  <td>Introducción a APIs REST para no programadores</td>
+                  <td>66</td>
+                  <td>2.0 de 2</td>
+                  <td>$0.00</td>
+                  <td><span class="badge badge--off">Dado de baja</span></td>
+                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="field-hint" style="margin-top:12px;">Total de ingresos: $14,920.00 · Tarjeta $10,320.00 · PayPal $4,600.00</p>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-mensajes">
+          <div class="panel messenger">
+            <div class="panel__head"><h3>Mensajes</h3></div>
+            <div class="messenger__layout">
+              <div class="messenger__list">
+                <div class="messenger__item is-active">
+                  <div class="dash-nav__avatar" style="width:36px; height:36px;"></div>
+                  <div class="messenger__item-body">
+                    <strong>Ana Torres</strong>
+                    <span>Tengo una duda sobre el middleware</span>
+                  </div>
+                  <span class="messenger__time">10:24</span>
+                </div>
+                <div class="messenger__item">
+                  <div class="dash-nav__avatar" style="width:36px; height:36px; background:linear-gradient(135deg, var(--sky), var(--cyan));"></div>
+                  <div class="messenger__item-body">
+                    <strong>Jorge Pérez</strong>
+                    <span>¿El nivel 5 ya tiene video?</span>
+                  </div>
+                  <span class="messenger__time">Ayer</span>
+                </div>
+              </div>
+              <div class="messenger__thread">
+                <div class="messenger__thread-head">
+                  <div class="dash-nav__avatar" style="width:32px; height:32px;"></div>
+                  <div><strong>Ana Torres</strong><span class="field-hint">Estudiante · MVC y arquitectura en tres capas</span></div>
+                </div>
+                <div class="messenger__bubble messenger__bubble--in">¿Ya viste el material del nivel 4? Cualquier duda me dices.</div>
+                <div class="messenger__bubble messenger__bubble--out">Claro Ana, el video de CORS explica justo eso.</div>
+                <div class="messenger__bubble messenger__bubble--in">Tengo una duda sobre el middleware.</div>
+                <div class="messenger__thread-input">
+                  <input type="text" placeholder="Escribe un mensaje…">
+                  <button class="btn btn--primary btn--sm">Enviar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-perfil">
+          <div class="panel" style="max-width:520px;">
+            <div class="panel__head"><h3>Mi perfil</h3></div>
+            <div class="avatar-upload" style="margin-bottom:18px;">
+              <div class="avatar-upload__preview" style="background:linear-gradient(135deg, var(--teal), var(--primary));">🖼️</div>
+              <div class="avatar-upload__actions">
+                <button type="button" class="btn btn--outline btn--sm">Cambiar foto</button>
+                <span class="field-hint">Imagen tipo avatar (JPG o PNG).</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div class="field">
+                <label>Nombre completo</label>
+                <input type="text" value="Fausto Islas">
+              </div>
+              <div class="field">
+                <label>Correo electrónico</label>
+                <input type="email" value="fausto.islas@correo.com">
+              </div>
+              <div style="display:flex; gap:14px;">
+                <div class="field" style="flex:1;">
+                  <label>Género</label>
+                  <select><option>Masculino</option><option>Femenino</option><option>Otro</option><option>Prefiero no decir</option></select>
+                </div>
+                <div class="field" style="flex:1;">
+                  <label>Fecha de nacimiento</label>
+                  <input type="date" value="1994-02-02">
+                </div>
+              </div>
+              <div class="field">
+                <label>Nueva contraseña</label>
+                <input type="password" placeholder="Dejar en blanco para no cambiar">
+              </div>
+              <button class="btn btn--primary" style="align-self:flex-start;">Guardar cambios</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

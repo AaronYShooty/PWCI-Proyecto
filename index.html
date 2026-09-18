@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walter | Portal de cursos en línea</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <a href="login.html" class="btn btn--outline btn--sm">Iniciar sesión</a>
+    <a href="register.html" class="btn btn--primary btn--sm">Registrarse</a>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html" class="is-active">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html">Registro</a>
+    <a href="curso.html">Detalle de curso</a>
+    <a href="crear-curso.html">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html">Instructor</a>
+    <a href="admin.html">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-publica">
+  <div class="shell">
+
+    <div class="hero">
+      <div class="stripe-corner"><img src="assets/Fondo.png" alt=""></div>
+      <div class="hero__content">
+        <span class="pill" style="background:rgba(255,255,255,0.14); color:white;">Aprende a tu ritmo</span>
+        <h1 style="margin-top:14px;">Cursos en línea guiados por instructores reales</h1>
+        <p>Explora cursos por niveles, avanza cuando quieras y obtén tu diploma al terminar. Walter te acompaña en cada paso.</p>
+        <div class="search-bar">
+          <input type="text" placeholder="Buscar cursos, categorías o instructores…">
+          <button>Buscar</button>
+        </div>
+      </div>
+      <div class="hero__visual">
+        <div class="hero__badge">
+          <img src="assets/Logo_Walter.png" alt="Walter">
+          <strong>¡Hola, soy Walter!</strong>
+          <span>Tu guía dentro del portal</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-row">
+      <span class="category-chip is-active">Todas</span>
+      <span class="category-chip">IT &amp; Software</span>
+      <span class="category-chip">Diseño</span>
+      <span class="category-chip">Marketing</span>
+      <span class="category-chip">Negocios</span>
+      <span class="category-chip">Idiomas</span>
+      <span class="category-chip">Fotografía</span>
+    </div>
+
+    <div class="section-heading" style="margin-top:12px;">
+      <h2>Los mejor calificados</h2>
+      <a class="link-more" href="#">Ver todos los cursos</a>
+    </div>
+
+    <div class="course-grid">
+      <article class="course-card">
+        <div class="course-card__thumb"><span>Gratis</span></div>
+        <div class="course-card__body">
+          <h3>Fundamentos de PHP orientado a objetos</h3>
+          <div class="course-card__meta">👤 Instructor: L. Reyes</div>
+          <div class="course-card__meta stars">★★★★★ <span style="color:var(--ink-soft); font-weight:500;">(128)</span></div>
+          <div class="course-card__footer">
+            <span class="price free">Gratis</span>
+            <span class="pill">4 niveles</span>
+          </div>
+        </div>
+      </article>
+      <article class="course-card">
+        <div class="course-card__thumb"><span>IT &amp; Software</span></div>
+        <div class="course-card__body">
+          <h3>MVC y arquitectura en tres capas con PHP</h3>
+          <div class="course-card__meta">👤 Instructor: F. Islas</div>
+          <div class="course-card__meta stars">★★★★☆ <span style="color:var(--ink-soft); font-weight:500;">(64)</span></div>
+          <div class="course-card__footer">
+            <span class="price">$499.00</span>
+            <span class="pill">6 niveles</span>
+          </div>
+        </div>
+      </article>
+      <article class="course-card">
+        <div class="course-card__thumb"><span>Diseño</span></div>
+        <div class="course-card__body">
+          <h3>Diseño de interfaces amigables para principiantes</h3>
+          <div class="course-card__meta">👤 Instructor: M. Cantú</div>
+          <div class="course-card__meta stars">★★★★★ <span style="color:var(--ink-soft); font-weight:500;">(212)</span></div>
+          <div class="course-card__footer">
+            <span class="price">$349.00</span>
+            <span class="pill">5 niveles</span>
+          </div>
+        </div>
+      </article>
+      <article class="course-card">
+        <div class="course-card__thumb"><span>Marketing</span></div>
+        <div class="course-card__body">
+          <h3>Estrategias de contenido para redes sociales</h3>
+          <div class="course-card__meta">👤 Instructor: D. Salas</div>
+          <div class="course-card__meta stars">★★★★☆ <span style="color:var(--ink-soft); font-weight:500;">(37)</span></div>
+          <div class="course-card__footer">
+            <span class="price">$299.00</span>
+            <span class="pill">3 niveles</span>
+          </div>
+        </div>
+      </article>
+      <article class="course-card">
+        <div class="course-card__thumb"><span>Negocios</span></div>
+        <div class="course-card__body">
+          <h3>Introducción a APIs REST para no programadores</h3>
+          <div class="course-card__meta">👤 Instructor: L. Reyes</div>
+          <div class="course-card__meta stars">★★★★★ <span style="color:var(--ink-soft); font-weight:500;">(95)</span></div>
+          <div class="course-card__footer">
+            <span class="price free">Gratis</span>
+            <span class="pill">2 niveles</span>
+          </div>
+        </div>
+      </article>
+      <article class="course-card">
+        <div class="course-card__thumb"><span>IT &amp; Software</span></div>
+        <div class="course-card__body">
+          <h3>MySQL: relaciones, llaves e integridad referencial</h3>
+          <div class="course-card__meta">👤 Instructor: F. Islas</div>
+          <div class="course-card__meta stars">★★★★★ <span style="color:var(--ink-soft); font-weight:500;">(150)</span></div>
+          <div class="course-card__footer">
+            <span class="price">$399.00</span>
+            <span class="pill">4 niveles</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <p class="footer-note">© 2026 Walter — Portal de cursos en línea · Prototipo generado para el Proyecto Integrador FE-PWCI-051</p>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel del administrador | Walter</title>
+<link rel="icon" href="assets/Walter.ico">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__row">
+    <a href="index.html" class="app-topbar__brand">
+      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
+      Walter
+    </a>
+    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
+  <div class="app-topbar__auth">
+    <div class="topbar-user">
+      <div class="topbar-user__avatar" style="background:linear-gradient(135deg, var(--ink), var(--primary));"></div>
+      <div class="topbar-user__info">
+        <strong>Administrador</strong>
+        <span>Cuenta admin</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <nav class="window-switcher">
+    <a href="index.html">Pública</a>
+    <a href="login.html">Iniciar sesión</a>
+    <a href="register.html">Registro</a>
+    <a href="curso.html">Detalle de curso</a>
+    <a href="crear-curso.html">Crear curso</a>
+    <a href="estudiante.html">Estudiante</a>
+    <a href="instructor.html">Instructor</a>
+    <a href="admin.html" class="is-active">Administrador</a>
+    <a href="diploma.html">Diploma</a>
+  </nav>
+</header>
+
+<section class="window is-active" id="win-admin">
+  <div class="shell">
+    <div class="dash">
+      <aside class="dash-nav">
+        <div class="dash-nav__user">
+          <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--ink), var(--primary));"></div>
+          <div>
+            <strong>Administrador</strong>
+            <span>Cuenta admin</span>
+          </div>
+        </div>
+        <a class="is-active" data-tab="usuarios">Usuarios</a>
+        <a data-tab="categorias">Categorías</a>
+        <a data-tab="comentarios">Comentarios</a>
+        <a data-tab="reportes">Reportes</a>
+        <a href="login.html">Cerrar sesión</a>
+      </aside>
+
+      <div class="dash-main">
+
+        <div class="dash-tab-panel is-active" id="dashtab-usuarios">
+          <div class="stat-row">
+            <div class="stat-card"><span>Usuarios activos</span><strong>1,204</strong></div>
+            <div class="stat-card"><span>Instructores</span><strong>48</strong></div>
+            <div class="stat-card"><span>Categorías</span><strong>9</strong></div>
+            <div class="stat-card"><span>Cuentas bloqueadas</span><strong>7</strong></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Gestión de usuarios</h3>
+              <div class="filter-row">
+                <select><option>Tipo: todos</option><option>Instructor</option><option>Estudiante</option></select>
+                <input type="text" placeholder="Buscar usuario…">
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Usuario</th><th>Nombre</th><th>Tipo</th><th>Fecha ingreso</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>fislas</td><td>Fausto Islas</td><td>Instructor</td><td>02 ene 2025</td>
+                  <td><span class="badge badge--ok">Activo</span></td>
+                  <td><button class="btn btn--outline btn--sm">Bloquear</button></td>
+                </tr>
+                <tr>
+                  <td>atorres</td><td>Ana Torres</td><td>Estudiante</td><td>18 mar 2025</td>
+                  <td><span class="badge badge--ok">Activo</span></td>
+                  <td><button class="btn btn--outline btn--sm">Bloquear</button></td>
+                </tr>
+                <tr>
+                  <td>jperez</td><td>Jorge Pérez</td><td>Estudiante</td><td>09 nov 2024</td>
+                  <td><span class="badge badge--off">Bloqueado</span></td>
+                  <td><button class="btn btn--primary btn--sm">Desbloquear</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-categorias">
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel__head"><h3>Categorías</h3></div>
+              <table>
+                <thead><tr><th>Categoría</th><th>Cursos</th><th>Creada por</th><th>Fecha</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>IT &amp; Software</td><td>62</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
+                  <tr><td>Diseño</td><td>34</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
+                  <tr><td>Marketing</td><td>21</td><td>fislas</td><td>15 mar 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
+                  <tr><td>Negocios</td><td>18</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
+                  <tr><td>Idiomas</td><td>9</td><td>admin</td><td>20 abr 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div class="panel__head"><h3 style="font-size:0.98rem;">Nueva categoría</h3></div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="field">
+                  <label>Nombre</label>
+                  <input type="text" placeholder="Ej. Fotografía">
+                </div>
+                <div class="field">
+                  <label>Descripción</label>
+                  <textarea rows="3" placeholder="¿Qué tipo de cursos contendrá?"></textarea>
+                </div>
+                <button class="btn btn--primary btn--sm" style="align-self:flex-start;">+ Agregar categoría</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-comentarios">
+          <div class="panel">
+            <div class="panel__head"><h3>Comentarios reportados</h3></div>
+            <div class="comment-row">
+              <div class="dash-nav__avatar" style="width:34px; height:34px; background:linear-gradient(135deg, var(--sky), var(--cyan));"></div>
+              <div class="comment-row__body">
+                <div class="comment-row__head"><strong>Jorge Pérez</strong><span class="comment-row__date">15 ago 2026 · MVC y arquitectura en tres capas</span></div>
+                <p>"Este curso es una pérdida de tiempo, el instructor no sabe explicar…"</p>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                  <select style="font-size:0.78rem;"><option>Causa: lenguaje ofensivo</option><option>Causa: spam</option><option>Causa: contenido irrelevante</option></select>
+                  <button class="btn btn--danger btn--sm">Eliminar comentario</button>
+                  <button class="btn btn--outline btn--sm">Descartar reporte</button>
+                </div>
+              </div>
+            </div>
+            <div class="comment-row">
+              <div class="dash-nav__avatar" style="width:34px; height:34px;"></div>
+              <div class="comment-row__body">
+                <div class="comment-row__head"><strong>Ana Torres</strong><span class="comment-row__date">10 ago 2026 · Fundamentos de PHP orientado a objetos</span></div>
+                <p>"Contenido publicitario no relacionado con el curso."</p>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                  <select style="font-size:0.78rem;"><option>Causa: spam</option><option>Causa: lenguaje ofensivo</option><option>Causa: contenido irrelevante</option></select>
+                  <button class="btn btn--danger btn--sm">Eliminar comentario</button>
+                  <button class="btn btn--outline btn--sm">Descartar reporte</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-tab-panel" id="dashtab-reportes">
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Reporte de usuarios</h3>
+            </div>
+            <div class="chip-list" style="margin-bottom:16px;">
+              <span class="category-chip is-active">Instructores</span>
+              <span class="category-chip">Estudiantes</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Usuario</th><th>Nombre</th><th>Fecha ingreso</th><th>Cursos ofrecidos</th><th>Total de ganancias</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>fislas</td><td>Fausto Islas</td><td>02 ene 2025</td><td>5</td><td>$18,420.00</td></tr>
+                <tr><td>lreyes</td><td>L. Reyes</td><td>14 ago 2024</td><td>3</td><td>$9,150.00</td></tr>
+                <tr><td>mcantu</td><td>M. Cantú</td><td>30 may 2025</td><td>2</td><td>$4,980.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
