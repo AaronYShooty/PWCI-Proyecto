@@ -106,37 +106,17 @@ const EDAD_MINIMA = 13;
 const EDAD_MAXIMA = 120;
 const MAX_FOTO = 2 * 1024 * 1024;              // 2 MB
 const TIPOS_FOTO = ['image/jpeg', 'image/png'];
-const LARGO_MIN_PASSWORD = 8;
+const LARGO_MIN_PASSWORD = 5;
 const LARGO_MAX_PASSWORD = 64;
 
-// Requisitos obligatorios de la contraseña. El mismo arreglo alimenta el mensaje de
-// error y la lista de requisitos que se va marcando mientras el usuario escribe.
+// Requisitos de la contraseña. El mismo arreglo alimenta el mensaje de error y la
+// lista de requisitos que se va marcando mientras el usuario escribe.
 const REGLAS_PASSWORD = [
-  { id: 'largo',   etiqueta: '8+ caracteres', falta: 'al menos 8 caracteres',  prueba: v => v.length >= LARGO_MIN_PASSWORD },
-  { id: 'mayus',   etiqueta: 'Una mayúscula', falta: 'una letra mayúscula',    prueba: v => /[A-ZÁÉÍÓÚÜÑ]/.test(v) },
-  { id: 'minus',   etiqueta: 'Una minúscula', falta: 'una letra minúscula',    prueba: v => /[a-záéíóúüñ]/.test(v) },
-  { id: 'numero',  etiqueta: 'Un número',     falta: 'un número',              prueba: v => /[0-9]/.test(v) },
-  { id: 'simbolo', etiqueta: 'Un símbolo',    falta: 'un símbolo (! @ # $ …)', prueba: v => RE_SIMBOLO.test(v) }
+  { id: 'largo',   falta: 'al menos ' + LARGO_MIN_PASSWORD + ' caracteres', prueba: v => v.length >= LARGO_MIN_PASSWORD },
+  { id: 'mayus',   falta: 'una letra mayúscula',                          prueba: v => /[A-ZÁÉÍÓÚÜÑ]/.test(v) },
+  { id: 'numero',  falta: 'un número',                                    prueba: v => /[0-9]/.test(v) },
+  { id: 'simbolo', falta: 'un carácter especial (! @ # $ …)',             prueba: v => RE_SIMBOLO.test(v) }
 ];
-
-// Contraseñas que aparecen en cualquier lista de filtraciones: se rechazan aunque
-// cumplan el resto de los requisitos.
-const PASSWORDS_COMUNES = [
-  'password', 'passw0rd', 'contrasena', 'contraseña', 'qwerty', 'qwertyui', '1q2w3e4r',
-  'admin', 'administrador', 'usuario', 'welcome', 'bienvenido', 'iloveyou', 'princesa',
-  'futbol', 'america', 'chivas', 'mexico', 'walter', 'letmein', 'monkey', 'dragon',
-  'abc123', 'asdfasdf', 'holamundo', 'hola1234', 'master', 'superman', 'batman',
-  'pokemon', 'samsung', 'google', 'facebook', 'secreto', 'sinclave', 'cambiame', 'temporal'
-];
-
-// Errores de dedo típicos al escribir el dominio del correo.
-const DOMINIOS_MAL_ESCRITOS = {
-  'gmail.con': 'gmail.com', 'gmail.co': 'gmail.com', 'gmial.com': 'gmail.com',
-  'gmai.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gmail.cm': 'gmail.com',
-  'hotmail.con': 'hotmail.com', 'hotmial.com': 'hotmail.com', 'hotmai.com': 'hotmail.com',
-  'hotmail.co': 'hotmail.com', 'outlok.com': 'outlook.com', 'outloo.com': 'outlook.com',
-  'yahoo.con': 'yahoo.com', 'yaho.com': 'yahoo.com', 'icloud.con': 'icloud.com'
-};
 
 /* --- Validadores de cada campo -------------------------------------------- */
 
@@ -157,9 +137,6 @@ function validarCorreo(el) {
   if (!dominio) return 'Falta el dominio después del @ (ejemplo: correo.com).';
   if (!dominio.includes('.')) return 'Al dominio le falta la extensión (ejemplo: .com o .mx).';
   if (valor.includes('..')) return 'El correo no puede tener dos puntos seguidos.';
-
-  const sugerencia = DOMINIOS_MAL_ESCRITOS[dominio.toLowerCase()];
-  if (sugerencia) return '¿Quisiste escribir ' + local + '@' + sugerencia + '?';
 
   if (!RE_CORREO.test(valor)) {
     return 'El formato del correo no es válido. Revisa que no tenga caracteres extraños ni puntos o guiones sueltos.';
@@ -217,28 +194,14 @@ function validarFoto(el) {
   return '';
 }
 
-// Validación completa de la contraseña nueva: requisitos obligatorios más las
-// comprobaciones que evitan contraseñas predecibles.
-function validarPasswordNueva(el, form) {
+// Contraseña nueva: debe cumplir todos los requisitos de REGLAS_PASSWORD.
+function validarPasswordNueva(el) {
   const valor = el.value;
   if (!valor) return 'Escribe una contraseña.';
-  if (valor !== valor.trim()) return 'La contraseña no puede empezar ni terminar con espacios.';
   if (valor.length > LARGO_MAX_PASSWORD) return 'La contraseña no puede pasar de ' + LARGO_MAX_PASSWORD + ' caracteres.';
 
   const faltantes = REGLAS_PASSWORD.filter(r => !r.prueba(valor)).map(r => r.falta);
   if (faltantes.length) return 'A la contraseña le falta ' + listaEnTexto(faltantes) + '.';
-
-  if (esPasswordComun(valor)) return 'Esa contraseña es demasiado común y aparece en listas de contraseñas filtradas.';
-  if (tieneCaracteresRepetidos(valor)) return 'Evita repetir el mismo carácter tres veces seguidas (aaa, 111).';
-  if (tieneSecuencia(valor)) return 'Evita secuencias predecibles como 1234, abcd o qwerty.';
-
-  const nombre = form && form.querySelector('#reg-nombre');
-  if (nombre && contieneDatoPersonal(valor, nombre.value)) return 'La contraseña no debe contener tu nombre.';
-
-  const correo = form && form.querySelector('#reg-email');
-  if (correo && contieneDatoPersonal(valor, correo.value.split('@')[0] || '')) {
-    return 'La contraseña no debe contener tu correo.';
-  }
   return '';
 }
 
@@ -262,55 +225,13 @@ function validarPasswordLogin(el) {
 
 /* --- Apoyos para la contraseña -------------------------------------------- */
 
-function esPasswordComun(valor) {
-  const limpio = valor.toLowerCase();
-  const soloLetras = limpio.replace(/[^a-záéíóúüñ]/g, '');
-  return PASSWORDS_COMUNES.some(comun => limpio === comun || limpio.startsWith(comun) || soloLetras === comun);
-}
-
-function tieneCaracteresRepetidos(valor) {
-  return /(.)\1\1/.test(valor);
-}
-
-function tieneSecuencia(valor) {
-  const v = valor.toLowerCase();
-  const cadenas = ['abcdefghijklmnopqrstuvwxyz', '0123456789', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-  for (const cadena of cadenas) {
-    for (let i = 0; i + 4 <= cadena.length; i++) {
-      const trozo = cadena.slice(i, i + 4);
-      const alReves = trozo.split('').reverse().join('');
-      if (v.includes(trozo) || v.includes(alReves)) return true;
-    }
-  }
-  return false;
-}
-
-// ¿La contraseña contiene alguna palabra del nombre o del correo? Se ignoran las
-// palabras muy cortas para no dar falsos positivos.
-function contieneDatoPersonal(password, dato) {
-  const v = password.toLowerCase();
-  return String(dato)
-    .toLowerCase()
-    .split(/[^a-záéíóúüñ0-9]+/)
-    .filter(palabra => palabra.length >= 4)
-    .some(palabra => v.includes(palabra));
-}
-
-// Nivel de 0 a 4 para la barra de seguridad. Es solo informativo: lo que bloquea el
-// envío son las reglas de validarPasswordNueva().
+// Nivel de 0 a 4 para la barra de seguridad: un punto por cada requisito cumplido.
 function calcularFuerza(valor) {
   if (!valor) return { nivel: 0, etiqueta: '' };
 
-  let puntos = REGLAS_PASSWORD.filter(r => r.prueba(valor)).length;
-  if (valor.length >= 12) puntos++;
-  if (valor.length >= 16) puntos++;
-  if (tieneSecuencia(valor) || tieneCaracteresRepetidos(valor)) puntos -= 2;
-  if (esPasswordComun(valor)) puntos = 0;
-
-  if (puntos <= 2) return { nivel: 1, etiqueta: 'Muy débil' };
-  if (puntos <= 4) return { nivel: 2, etiqueta: 'Débil' };
-  if (puntos <= 5) return { nivel: 3, etiqueta: 'Aceptable' };
-  return { nivel: 4, etiqueta: 'Fuerte' };
+  const cumplidos = REGLAS_PASSWORD.filter(r => r.prueba(valor)).length;
+  const etiquetas = ['Muy débil', 'Muy débil', 'Débil', 'Casi lista', 'Válida'];
+  return { nivel: Math.max(cumplidos, 1), etiqueta: etiquetas[cumplidos] };
 }
 
 function listaEnTexto(items) {

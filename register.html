@@ -91,7 +91,7 @@
           <div class="field">
             <label for="reg-password">Contraseña</label>
             <div class="input-wrap">
-              <input type="password" id="reg-password" name="password" placeholder="Mínimo 8 caracteres"
+              <input type="password" id="reg-password" name="password" placeholder="Mínimo 5 caracteres"
                      autocomplete="new-password" maxlength="64" required
                      aria-describedby="reg-password-medidor">
               <button type="button" class="pw-toggle" data-target="reg-password"
@@ -101,14 +101,12 @@
               <div class="pw-meter__track"><span class="pw-meter__fill"></span></div>
               <span class="pw-meter__label" aria-live="polite"></span>
               <ul class="pw-rules">
-                <li class="pw-rule" data-regla="largo">8+ caracteres</li>
+                <li class="pw-rule" data-regla="largo">Mínimo 5 caracteres</li>
                 <li class="pw-rule" data-regla="mayus">Una mayúscula</li>
-                <li class="pw-rule" data-regla="minus">Una minúscula</li>
                 <li class="pw-rule" data-regla="numero">Un número</li>
-                <li class="pw-rule" data-regla="simbolo">Un símbolo</li>
+                <li class="pw-rule" data-regla="simbolo">Un carácter especial</li>
               </ul>
             </div>
-            <span class="field-hint">Evita datos personales y secuencias como 1234 o qwerty.</span>
           </div>
           <div class="field">
             <label for="reg-password2">Confirmar contraseña</label>
