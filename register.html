@@ -48,53 +48,83 @@
       <div class="auth-panel">
         <h2 style="font-size:1.4rem; margin-bottom:22px;">Crea tu cuenta</h2>
 
-        <form class="auth-form is-active" id="form-register">
+        <form class="auth-form is-active" id="form-register" novalidate>
+          <div class="form-alert" role="status" aria-live="polite"></div>
+
           <div class="field">
-            <label>Foto de perfil</label>
+            <label for="reg-foto">Foto de perfil</label>
             <div class="avatar-upload">
-              <div class="avatar-upload__preview">🖼️</div>
+              <div class="avatar-upload__preview" id="reg-foto-preview">🖼️</div>
               <div class="avatar-upload__actions">
-                <button type="button" class="btn btn--outline btn--sm">Subir foto</button>
-                <span class="field-hint">Obligatoria, tipo avatar (JPG o PNG).</span>
+                <input type="file" id="reg-foto" name="foto" accept="image/jpeg,image/png" hidden required>
+                <button type="button" class="btn btn--outline btn--sm" id="reg-foto-btn">Subir foto</button>
+                <span class="field-hint">Obligatoria, tipo avatar (JPG o PNG, máximo 2 MB).</span>
               </div>
             </div>
           </div>
           <div class="field">
-            <label>Nombre completo</label>
-            <input type="text" placeholder="Nombre y apellidos">
+            <label for="reg-nombre">Nombre completo</label>
+            <input type="text" id="reg-nombre" name="nombre" placeholder="Nombre y apellidos"
+                   autocomplete="name" maxlength="80" required>
           </div>
           <div class="field">
-            <label>Correo electrónico</label>
-            <input type="email" placeholder="tu@correo.com">
+            <label for="reg-email">Correo electrónico</label>
+            <input type="email" id="reg-email" name="correo" placeholder="tu@correo.com"
+                   autocomplete="email" maxlength="254" required>
           </div>
           <div style="display:flex; gap:14px;">
             <div class="field" style="flex:1;">
-              <label>Género</label>
-              <select>
-                <option>Femenino</option>
-                <option>Masculino</option>
-                <option>Otro</option>
-                <option>Prefiero no decir</option>
+              <label for="reg-genero">Género</label>
+              <select id="reg-genero" name="genero" required>
+                <option value="">Selecciona…</option>
+                <option value="F">Femenino</option>
+                <option value="M">Masculino</option>
+                <option value="O">Otro</option>
+                <option value="N">Prefiero no decir</option>
               </select>
             </div>
             <div class="field" style="flex:1;">
-              <label>Fecha de nacimiento</label>
-              <input type="date">
+              <label for="reg-fecha">Fecha de nacimiento</label>
+              <input type="date" id="reg-fecha" name="nacimiento" required>
             </div>
           </div>
           <div class="field">
-            <label>Contraseña</label>
-            <input type="password" placeholder="Mínimo 8 caracteres">
-            <span class="field-hint">Debe incluir una mayúscula, un número y un carácter especial.</span>
+            <label for="reg-password">Contraseña</label>
+            <div class="input-wrap">
+              <input type="password" id="reg-password" name="password" placeholder="Mínimo 5 caracteres"
+                     autocomplete="new-password" maxlength="64" required
+                     aria-describedby="reg-password-medidor">
+              <button type="button" class="pw-toggle" data-target="reg-password"
+                      aria-label="Mostrar contraseña">Mostrar</button>
+            </div>
+            <div class="pw-meter" id="reg-password-medidor" data-nivel="0">
+              <div class="pw-meter__track"><span class="pw-meter__fill"></span></div>
+              <span class="pw-meter__label" aria-live="polite"></span>
+              <ul class="pw-rules">
+                <li class="pw-rule" data-regla="largo">Mínimo 5 caracteres</li>
+                <li class="pw-rule" data-regla="mayus">Una mayúscula</li>
+                <li class="pw-rule" data-regla="numero">Un número</li>
+                <li class="pw-rule" data-regla="simbolo">Un carácter especial</li>
+              </ul>
+            </div>
+          </div>
+          <div class="field">
+            <label for="reg-password2">Confirmar contraseña</label>
+            <div class="input-wrap">
+              <input type="password" id="reg-password2" name="password2" placeholder="Repite la contraseña"
+                     autocomplete="new-password" maxlength="64" required>
+              <button type="button" class="pw-toggle" data-target="reg-password2"
+                      aria-label="Mostrar contraseña">Mostrar</button>
+            </div>
           </div>
           <div class="field">
             <label>Quiero registrarme como</label>
             <div class="role-toggle">
-              <label><input type="radio" name="role" checked style="margin-right:6px;">Estudiante</label>
-              <label><input type="radio" name="role" style="margin-right:6px;">Instructor</label>
+              <label><input type="radio" name="role" value="estudiante" checked style="margin-right:6px;">Estudiante</label>
+              <label><input type="radio" name="role" value="instructor" style="margin-right:6px;">Instructor</label>
             </div>
           </div>
-          <button type="button" class="btn btn--primary" style="margin-top:8px;">Crear mi cuenta</button>
+          <button type="submit" class="btn btn--primary" style="margin-top:8px;">Crear mi cuenta</button>
         </form>
 
         <div class="admin-note">
