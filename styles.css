@@ -990,3 +990,112 @@ textarea:focus{ border-color: var(--primary); }
   .messenger__layout{ grid-template-columns: 1fr; }
   .messenger__list{ border-right: none; border-bottom: 1px solid var(--line); max-height: 200px; }
 }
+
+/* ---------- VALIDACIÓN DE FORMULARIOS ---------- */
+
+/* Mensaje de error debajo de cada campo. Lo crea script.js solo cuando hace falta,
+   por eso empieza oculto y se muestra al marcar el campo con .has-error. */
+.field-error{
+  display: none;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #c0392b;
+}
+
+.field.has-error .field-error{ display: block; }
+
+.field.has-error input,
+.field.has-error select,
+.field.has-error textarea{
+  border-color: #e0837c;
+  background: #fffafa;
+}
+
+.field.has-error input:focus,
+.field.has-error select:focus,
+.field.has-error textarea:focus{ border-color: #c0392b; }
+
+.field.is-valid input,
+.field.is-valid select{ border-color: var(--teal); }
+
+.field.has-error .avatar-upload__preview{ box-shadow: 0 0 0 2px #e0837c; }
+
+/* Aviso general arriba del formulario (resumen de errores o confirmación) */
+.form-alert{
+  display: none;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.form-alert.is-visible{ display: block; }
+.form-alert--error{ background: #fdeceb; color: #a53023; }
+.form-alert--ok{ background: #e4f9ef; color: #157f4c; }
+
+/* Campo de contraseña con botón Mostrar / Ocultar */
+.input-wrap{ position: relative; display: flex; }
+.input-wrap input{ flex: 1; width: 100%; padding-right: 80px; }
+
+.pw-toggle{
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  color: var(--primary-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 8px;
+  border-radius: 8px;
+}
+.pw-toggle:hover{ background: var(--surface-alt); }
+
+/* Barra de seguridad y lista de requisitos de la contraseña */
+.pw-meter{ display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+
+.pw-meter__track{
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.pw-meter__fill{
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: #e05c4f;
+  transition: width .2s ease, background .2s ease;
+}
+
+.pw-meter__label{ font-size: 0.76rem; font-weight: 600; color: var(--ink-soft); min-height: 1em; }
+
+.pw-meter[data-nivel="2"] .pw-meter__fill{ background: #efa53d; }
+.pw-meter[data-nivel="3"] .pw-meter__fill{ background: var(--primary); }
+.pw-meter[data-nivel="4"] .pw-meter__fill{ background: var(--teal); }
+
+.pw-rules{
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 4px 12px;
+}
+
+.pw-rule{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+.pw-rule::before{ content: '○'; font-size: 0.7rem; }
+.pw-rule.is-ok{ color: #157f4c; }
+.pw-rule.is-ok::before{ content: '✔'; }
+
+/* Miniatura de la foto de perfil una vez que el usuario elige un archivo */
+.avatar-upload__preview{ background-size: cover; background-position: center; }
