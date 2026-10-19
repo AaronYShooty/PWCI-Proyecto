@@ -10,6 +10,8 @@
   --primary: #0090e8;
   --primary-dark: #0072b8;
   --teal: #4fd9bf;
+  --primary-strong: #0077c0;
+  --teal-dark: #0b7a65;
   --line: #d7edfb;
   --radius-lg: 28px;
   --radius-md: 18px;
@@ -140,7 +142,7 @@ img{ max-width: 100%; display: block; }
 .window-switcher a:hover{ background: var(--surface-alt); }
 
 .window-switcher a.is-active{
-  background: var(--primary);
+  background: var(--primary-strong);
   color: white;
 }
 
@@ -222,7 +224,7 @@ img{ max-width: 100%; display: block; }
   font-size: 0.95rem;
 }
 
-.btn--primary{ background: var(--primary); color: white; }
+.btn--primary{ background: var(--primary-strong); color: white; }
 .btn--ghost{ background: var(--surface-alt); color: var(--primary-dark); }
 .btn--outline{ background: transparent; border: 1.5px solid var(--line); color: var(--ink); }
 .btn--sm{ padding: 8px 14px; font-size: 0.82rem; border-radius: var(--radius-sm); }
@@ -241,6 +243,15 @@ img{ max-width: 100%; display: block; }
   grid-template-columns: 1.1fr 0.9fr;
   gap: 32px;
   align-items: center;
+}
+
+.hero::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--ink) 0%, var(--ink) 50%, rgba(11, 43, 69, 0) 78%);
 }
 
 .hero__content{ position: relative; z-index: 1; }
@@ -279,7 +290,7 @@ img{ max-width: 100%; display: block; }
 }
 
 .search-bar button{
-  background: var(--primary);
+  background: var(--primary-strong);
   color: white;
   padding: 10px 20px;
   border-radius: 999px;
@@ -295,7 +306,7 @@ img{ max-width: 100%; display: block; }
 }
 
 .hero__badge{
-  background: rgba(255,255,255,0.12);
+  background: rgba(11, 43, 69, 0.82);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: var(--radius-lg);
   padding: 22px;
@@ -385,9 +396,35 @@ img{ max-width: 100%; display: block; }
 }
 
 .price{ font-weight: 700; color: var(--ink); }
-.price.free{ color: var(--teal); }
+.price.free{ color: var(--teal-dark); }
 
-.stars{ color: #f5a623; font-size: 0.85rem; }
+.stars{ color: #b36b00; font-size: 0.85rem; }
+.course-card__nota{ color: var(--ink-soft); font-weight: 500; }
+
+.course-card__thumb img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-grid__estado{
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.course-grid__error{
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
 
 /* ---------- AUTH WINDOW ---------- */
 
@@ -409,6 +446,15 @@ img{ max-width: 100%; display: block; }
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+}
+
+.auth-visual::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, var(--ink) 0%, var(--ink) 40%, rgba(11, 43, 69, 0) 75%);
 }
 
 .auth-visual__top{ position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; font-family: 'Baloo 2', sans-serif; font-weight: 700; }
@@ -541,7 +587,7 @@ img{ max-width: 100%; display: block; }
   margin-bottom: 4px;
 }
 
-.dash-nav a.is-active{ background: var(--primary); color: white; }
+.dash-nav a.is-active{ background: var(--primary-strong); color: white; }
 
 .dash-main{ display: flex; flex-direction: column; gap: 22px; }
 
@@ -616,7 +662,7 @@ tbody tr:last-child td{ border-bottom: none; }
   background: var(--surface-alt);
   overflow: hidden;
 }
-.progress-bar span{ display: block; height: 100%; background: var(--teal); }
+.progress-bar span{ display: block; height: 100%; background: var(--teal-dark); }
 
 .badge{
   display: inline-flex;
@@ -627,8 +673,8 @@ tbody tr:last-child td{ border-bottom: none; }
   font-size: 0.74rem;
   font-weight: 700;
 }
-.badge--ok{ background: #e4f9ef; color: #1a9b5b; }
-.badge--warn{ background: #fff3da; color: #b3760a; }
+.badge--ok{ background: #e4f9ef; color: #127a44; }
+.badge--warn{ background: #fff3da; color: #8a5a00; }
 .badge--off{ background: #fdeceb; color: #c0392b; }
 
 .course-row-card{
@@ -664,6 +710,7 @@ tbody tr:last-child td{ border-bottom: none; }
 
 @media (max-width: 900px){
   .hero{ grid-template-columns: 1fr; }
+  .hero::after{ background: rgba(11, 43, 69, 0.85); }
   .course-grid{ grid-template-columns: repeat(2, 1fr); }
   .auth-shell{ grid-template-columns: 1fr; }
   .auth-visual{ display: none; }
@@ -782,8 +829,8 @@ tbody tr:last-child td{ border-bottom: none; }
   flex: none;
 }
 
-.level-row.is-done .level-row__check{ background: var(--teal); color: white; }
-.level-row.is-current .level-row__check{ background: var(--primary); color: white; }
+.level-row.is-done .level-row__check{ background: var(--teal-dark); color: white; }
+.level-row.is-current .level-row__check{ background: var(--primary-strong); color: white; }
 
 .level-row__body{ display: flex; flex-direction: column; flex: 1; }
 .level-row__body strong{ font-size: 0.92rem; }
@@ -864,7 +911,7 @@ textarea:focus{ border-color: var(--primary); }
 
 .diploma__eyebrow{
   display: inline-block;
-  color: var(--primary-dark);
+  color: #006aa8;
   font-weight: 700;
   font-size: 0.85rem;
   margin-bottom: 18px;
@@ -966,7 +1013,7 @@ textarea:focus{ border-color: var(--primary); }
 }
 
 .messenger__bubble--in{ background: var(--surface-alt); align-self: flex-start; }
-.messenger__bubble--out{ background: var(--primary); color: white; align-self: flex-end; }
+.messenger__bubble--out{ background: var(--primary-strong); color: white; align-self: flex-end; }
 
 .messenger__thread-input{
   margin-top: auto;
@@ -1099,3 +1146,27 @@ textarea:focus{ border-color: var(--primary); }
 
 /* Miniatura de la foto de perfil una vez que el usuario elige un archivo */
 .avatar-upload__preview{ background-size: cover; background-position: center; }
+
+/* ---------- CATÁLOGO, CREAR CURSO Y CATEGORÍAS ---------- */
+
+.catalogo-bloque{ margin-top: 28px; }
+
+.categoria-lista{ display: flex; flex-wrap: wrap; gap: 8px 16px; }
+
+.field .categoria-opcion{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field .categoria-opcion input{
+  width: auto;
+  padding: 0;
+  border: none;
+  accent-color: var(--primary-strong);
+}
+
+.level-editor--pendiente{ opacity: 0.6; }

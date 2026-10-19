@@ -1,0 +1,7 @@
+RewriteEngine On
+
+RewriteRule ^api/cursos/?$ api/cursos.php [L,QSA]
+RewriteRule ^api/cursos/([^/]+)/?$ api/cursos.php?id=$1 [L,QSA]
+
+RewriteRule ^api/categorias/?$ api/categorias.php [L,QSA]
+RewriteRule ^api/categorias/([^/]+)/?$ api/categorias.php?id=$1 [L,QSA]

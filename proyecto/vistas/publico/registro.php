@@ -1,45 +1,20 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crear cuenta | Walter</title>
-<link rel="icon" href="assets/Walter.ico">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<header class="app-topbar">
-  <div class="app-topbar__row">
-    <a href="index.html" class="app-topbar__brand">
-      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
-      Walter
-    </a>
-    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
-  <div class="app-topbar__auth">
-    <a href="login.html" class="btn btn--outline btn--sm">Iniciar sesión</a>
-    <a href="register.html" class="btn btn--primary btn--sm">Registrarse</a>
-  </div>
-  </div>
-  <nav class="window-switcher">
-    <a href="index.html">Pública</a>
-    <a href="login.html">Iniciar sesión</a>
-    <a href="register.html" class="is-active">Registro</a>
-    <a href="curso.html">Detalle de curso</a>
-    <a href="crear-curso.html">Crear curso</a>
-    <a href="estudiante.html">Estudiante</a>
-    <a href="instructor.html">Instructor</a>
-    <a href="admin.html">Administrador</a>
-    <a href="diploma.html">Diploma</a>
-  </nav>
-</header>
+<?php
+$titulo = 'Crear cuenta | Walter';
+$activa = 'registro';
+$errores = $errores ?? [];
+$datos = $datos ?? [];
+$claseCampo = fn($c) => isset($errores[$c]) ? ' has-error' : '';
+$errorCampo = fn($c) => isset($errores[$c]) ? '<span class="field-error" role="alert">' . htmlspecialchars($errores[$c]) . '</span>' : '';
+$valor = fn($c) => htmlspecialchars($datos[$c] ?? '');
+require dirname(__DIR__) . '/_encabezado.php';
+?>
 
 <section class="window is-active" id="win-register">
   <div class="shell" style="max-width: 980px;">
     <div class="auth-shell">
       <div class="auth-visual">
-        <div class="stripe-corner" style="opacity:.5;"><img src="assets/Fondo.png" alt=""></div>
-        <div class="auth-visual__top"><img src="assets/Logo_Walter.png" alt="Walter"> Walter</div>
+        <div class="stripe-corner" style="opacity:.5;"><img src="publico/img/Fondo.png" alt=""></div>
+        <div class="auth-visual__top"><img src="publico/img/Logo_Walter.png" alt="Walter"> Walter</div>
         <div class="auth-visual__quote">
           <h2>Aprende a tu ritmo, con instructores reales</h2>
           <p>Crea tu cuenta gratis para inscribirte a cursos o para empezar a ofrecer los tuyos.</p>
@@ -48,10 +23,14 @@
       <div class="auth-panel">
         <h2 style="font-size:1.4rem; margin-bottom:22px;">Crea tu cuenta</h2>
 
-        <form class="auth-form is-active" id="form-register" novalidate>
+        <form class="auth-form is-active" id="form-register" method="post" action="index.php?ruta=registro" enctype="multipart/form-data" novalidate>
+          <?php if ($errores): ?>
+          <div class="form-alert is-visible form-alert--error" role="status" aria-live="polite">Revisa los campos marcados en rojo.</div>
+          <?php else: ?>
           <div class="form-alert" role="status" aria-live="polite"></div>
+          <?php endif; ?>
 
-          <div class="field">
+          <div class="field<?= $claseCampo('foto') ?>">
             <label for="reg-foto">Foto de perfil</label>
             <div class="avatar-upload">
               <div class="avatar-upload__preview" id="reg-foto-preview">🖼️</div>
@@ -61,37 +40,41 @@
                 <span class="field-hint">Obligatoria, tipo avatar (JPG o PNG, máximo 2 MB).</span>
               </div>
             </div>
+            <?= $errorCampo('foto') ?>
           </div>
-          <div class="field">
+          <div class="field<?= $claseCampo('nombre') ?>">
             <label for="reg-nombre">Nombre completo</label>
-            <input type="text" id="reg-nombre" name="nombre" placeholder="Nombre y apellidos"
+            <input type="text" id="reg-nombre" name="nombre" value="<?= $valor('nombre') ?>" placeholder="Nombre y apellidos"
                    autocomplete="name" maxlength="80" required>
+            <?= $errorCampo('nombre') ?>
           </div>
-          <div class="field">
+          <div class="field<?= $claseCampo('email') ?>">
             <label for="reg-email">Correo electrónico</label>
-            <input type="email" id="reg-email" name="correo" placeholder="tu@correo.com"
+            <input type="email" id="reg-email" name="correo" value="<?= $valor('email') ?>" placeholder="tu@correo.com"
                    autocomplete="email" maxlength="254" required>
+            <?= $errorCampo('email') ?>
           </div>
           <div style="display:flex; gap:14px;">
-            <div class="field" style="flex:1;">
+            <div class="field<?= $claseCampo('genero') ?>" style="flex:1;">
               <label for="reg-genero">Género</label>
               <select id="reg-genero" name="genero" required>
                 <option value="">Selecciona…</option>
-                <option value="F">Femenino</option>
-                <option value="M">Masculino</option>
-                <option value="O">Otro</option>
-                <option value="N">Prefiero no decir</option>
+                <?php foreach (['Femenino', 'Masculino', 'Otro', 'Prefiero no decir'] as $g): ?>
+                <option value="<?= $g ?>"<?= ($datos['genero'] ?? '') === $g ? ' selected' : '' ?>><?= $g ?></option>
+                <?php endforeach; ?>
               </select>
+              <?= $errorCampo('genero') ?>
             </div>
-            <div class="field" style="flex:1;">
+            <div class="field<?= $claseCampo('nacimiento') ?>" style="flex:1;">
               <label for="reg-fecha">Fecha de nacimiento</label>
-              <input type="date" id="reg-fecha" name="nacimiento" required>
+              <input type="date" id="reg-fecha" name="nacimiento" value="<?= $valor('nacimiento') ?>" required>
+              <?= $errorCampo('nacimiento') ?>
             </div>
           </div>
-          <div class="field">
+          <div class="field<?= $claseCampo('password') ?>">
             <label for="reg-password">Contraseña</label>
             <div class="input-wrap">
-              <input type="password" id="reg-password" name="password" placeholder="Mínimo 5 caracteres"
+              <input type="password" id="reg-password" name="password" placeholder="Mínimo 8 caracteres"
                      autocomplete="new-password" maxlength="64" required
                      aria-describedby="reg-password-medidor">
               <button type="button" class="pw-toggle" data-target="reg-password"
@@ -101,14 +84,15 @@
               <div class="pw-meter__track"><span class="pw-meter__fill"></span></div>
               <span class="pw-meter__label" aria-live="polite"></span>
               <ul class="pw-rules">
-                <li class="pw-rule" data-regla="largo">Mínimo 5 caracteres</li>
+                <li class="pw-rule" data-regla="largo">Mínimo 8 caracteres</li>
                 <li class="pw-rule" data-regla="mayus">Una mayúscula</li>
                 <li class="pw-rule" data-regla="numero">Un número</li>
                 <li class="pw-rule" data-regla="simbolo">Un carácter especial</li>
               </ul>
             </div>
+            <?= $errorCampo('password') ?>
           </div>
-          <div class="field">
+          <div class="field<?= $claseCampo('password2') ?>">
             <label for="reg-password2">Confirmar contraseña</label>
             <div class="input-wrap">
               <input type="password" id="reg-password2" name="password2" placeholder="Repite la contraseña"
@@ -116,13 +100,16 @@
               <button type="button" class="pw-toggle" data-target="reg-password2"
                       aria-label="Mostrar contraseña">Mostrar</button>
             </div>
+            <span class="field-hint">Escríbela de nuevo a mano, no se permite pegar.</span>
+            <?= $errorCampo('password2') ?>
           </div>
-          <div class="field">
+          <div class="field<?= $claseCampo('rol') ?>">
             <label>Quiero registrarme como</label>
             <div class="role-toggle">
-              <label><input type="radio" name="role" value="estudiante" checked style="margin-right:6px;">Estudiante</label>
-              <label><input type="radio" name="role" value="instructor" style="margin-right:6px;">Instructor</label>
+              <label><input type="radio" name="role" value="estudiante"<?= ($datos['rol'] ?? 'estudiante') === 'estudiante' ? ' checked' : '' ?> style="margin-right:6px;">Estudiante</label>
+              <label><input type="radio" name="role" value="instructor"<?= ($datos['rol'] ?? '') === 'instructor' ? ' checked' : '' ?> style="margin-right:6px;">Instructor</label>
             </div>
+            <?= $errorCampo('rol') ?>
           </div>
           <button type="submit" class="btn btn--primary" style="margin-top:8px;">Crear mi cuenta</button>
         </form>
@@ -131,12 +118,10 @@
           🔒 Las cuentas de <strong>administrador</strong> no se crean desde este formulario. Se asignan directamente en la base de datos por el equipo del portal.
         </div>
 
-        <p class="auth-switch">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+        <p class="auth-switch">¿Ya tienes cuenta? <a href="index.php?ruta=login">Inicia sesión</a></p>
       </div>
     </div>
   </div>
 </section>
 
-<script src="script.js"></script>
-</body>
-</html>
+<?php require dirname(__DIR__) . '/_pie.php'; ?>

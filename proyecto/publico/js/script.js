@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initMostrarContrasena();
   initFormLogin();
   initFormRegistro();
+  initCatalogo();
+  initCrearCurso();
+  initAdminCategorias();
 });
 
 /* =========================================================================
@@ -106,7 +109,7 @@ const EDAD_MINIMA = 13;
 const EDAD_MAXIMA = 120;
 const MAX_FOTO = 2 * 1024 * 1024;              // 2 MB
 const TIPOS_FOTO = ['image/jpeg', 'image/png'];
-const LARGO_MIN_PASSWORD = 5;
+const LARGO_MIN_PASSWORD = 8;
 const LARGO_MAX_PASSWORD = 64;
 
 // Requisitos de la contraseña. El mismo arreglo alimenta el mensaje de error y la
@@ -393,8 +396,8 @@ function initFormLogin() {
   configurarValidacion(form, {
     'login-email': validarCorreo,
     'login-password': validarPasswordLogin
-  }, (formulario, caja) => {
-    mostrarAviso(caja, 'ok', 'Los datos tienen el formato correcto. En la versión final se enviarían al servidor para comprobar la cuenta.');
+  }, (formulario) => {
+    formulario.submit();
   });
 }
 
@@ -422,13 +425,18 @@ function initFormRegistro() {
     'reg-fecha': validarFechaNacimiento,
     'reg-password': validarPasswordNueva,
     'reg-password2': validarConfirmacion
-  }, (formulario, caja) => {
-    mostrarAviso(caja, 'ok', 'Todo correcto. En la versión final aquí se crearía la cuenta en la base de datos.');
+  }, (formulario) => {
+    formulario.submit();
   });
 
   // Si cambia la contraseña original, la confirmación deja de coincidir.
   const password = form.querySelector('#reg-password');
   const password2 = form.querySelector('#reg-password2');
+  if (password2) {
+    ['paste', 'drop'].forEach(evento => {
+      password2.addEventListener(evento, (e) => e.preventDefault());
+    });
+  }
   if (password && password2) {
     password.addEventListener('input', () => {
       if (!password2.value) return;
@@ -486,4 +494,450 @@ function initMedidorPassword(form) {
       regla.classList.toggle('is-ok', Boolean(definicion) && definicion.prueba(valor));
     });
   });
+}
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const CABECERAS_JSON = { Accept: 'application/json', 'Content-Type': 'application/json' };
+
+function pedirApi(url, opciones) {
+  return fetch(url, opciones).then(respuesta =>
+    respuesta.json().then(cuerpo => ({ respuesta, cuerpo })));
+}
+
+function textoDeErrorApi(cuerpo, porDefecto) {
+  const detalle = (cuerpo.errores || []).map(e => e.descripcion).join(' ');
+  return [cuerpo.mensaje || porDefecto, detalle].join(' ').trim();
+}
+
+function mensajeDeError(error) {
+  if (error instanceof TypeError) return 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+  if (error instanceof SyntaxError) return 'El servidor respondió de forma inesperada.';
+  return error.message;
+}
+
+function crearNodo(etiqueta, clase, texto) {
+  const nodo = document.createElement(etiqueta);
+  if (clase) nodo.className = clase;
+  if (texto !== undefined) nodo.textContent = texto;
+  return nodo;
+}
+
+function formatoMoneda(valor) {
+  return '$' + valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatoFecha(texto) {
+  const fecha = new Date(texto.replace(' ', 'T'));
+  if (Number.isNaN(fecha.getTime())) return texto;
+  return String(fecha.getDate()).padStart(2, '0') + '-' + MESES[fecha.getMonth()] + '-' + fecha.getFullYear();
+}
+
+function crearBotonReintentar(alPulsar) {
+  const boton = crearNodo('button', 'btn btn--ghost btn--sm', 'Reintentar');
+  boton.type = 'button';
+  boton.addEventListener('click', alPulsar);
+  return boton;
+}
+
+/* --- Catálogo público ------------------------------------------------------ */
+
+function initCatalogo() {
+  const bloques = Array.from(document.querySelectorAll('.course-grid[data-orden]'));
+  if (!bloques.length) return;
+
+  const filtros = { titulo: '', categoria: '' };
+  const recargar = () => bloques.forEach(grid => cargarCursos(grid, filtros));
+
+  const formulario = document.getElementById('form-busqueda');
+  const entrada = document.getElementById('busqueda-titulo');
+  if (formulario && entrada) {
+    formulario.addEventListener('submit', (e) => {
+      e.preventDefault();
+      filtros.titulo = entrada.value.trim();
+      recargar();
+    });
+  }
+
+  const fila = document.getElementById('categoria-fila');
+  if (fila) {
+    cargarChips(fila, (id) => {
+      filtros.categoria = id;
+      recargar();
+    });
+  }
+
+  recargar();
+}
+
+function cargarChips(fila, alElegir) {
+  return pedirApi('api/categorias', { headers: { Accept: 'application/json' } })
+    .then(({ respuesta, cuerpo }) => {
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudieron cargar las categorías.'));
+
+      const chips = [crearChip('Todas', '', true)]
+        .concat(cuerpo.datos.map(c => crearChip(c.nombre, String(c.id_categoria), false)));
+      chips.forEach(chip => chip.addEventListener('click', () => {
+        chips.forEach(otro => otro.classList.toggle('is-active', otro === chip));
+        alElegir(chip.dataset.id);
+      }));
+      fila.replaceChildren(...chips);
+    })
+    .catch(error => {
+      fila.replaceChildren(
+        crearNodo('span', 'field-hint', mensajeDeError(error) + ' '),
+        crearBotonReintentar(() => cargarChips(fila, alElegir))
+      );
+    });
+}
+
+function crearChip(texto, id, activo) {
+  const chip = crearNodo('button', activo ? 'category-chip is-active' : 'category-chip', texto);
+  chip.type = 'button';
+  chip.dataset.id = id;
+  return chip;
+}
+
+function cargarCursos(grid, filtros) {
+  const solicitud = String(Number(grid.dataset.solicitud || 0) + 1);
+  grid.dataset.solicitud = solicitud;
+  mostrarEstadoCatalogo(grid, 'Cargando cursos…');
+
+  const parametros = new URLSearchParams({ orden: grid.dataset.orden, por_pagina: '6' });
+  if (filtros.titulo) parametros.set('titulo', filtros.titulo);
+  if (filtros.categoria) parametros.set('categoria', filtros.categoria);
+
+  return pedirApi('api/cursos?' + parametros.toString(), { headers: { Accept: 'application/json' } })
+    .then(({ respuesta, cuerpo }) => {
+      if (grid.dataset.solicitud !== solicitud) return;
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudo cargar el catálogo.'));
+      pintarCursos(grid, cuerpo.datos, Boolean(filtros.titulo || filtros.categoria));
+    })
+    .catch(error => {
+      if (grid.dataset.solicitud !== solicitud) return;
+      mostrarErrorCatalogo(grid, mensajeDeError(error), () => cargarCursos(grid, filtros));
+    });
+}
+
+function mostrarEstadoCatalogo(grid, texto) {
+  grid.replaceChildren(crearNodo('p', 'course-grid__estado', texto));
+}
+
+function mostrarErrorCatalogo(grid, texto, reintentar) {
+  const caja = crearNodo('div', 'course-grid__error');
+  const aviso = crearNodo('div', 'form-alert is-visible form-alert--error', texto);
+  aviso.setAttribute('role', 'alert');
+  caja.append(aviso, crearBotonReintentar(reintentar));
+  grid.replaceChildren(caja);
+}
+
+function pintarCursos(grid, cursos, filtrado) {
+  if (!cursos.length) {
+    mostrarEstadoCatalogo(grid, filtrado ? 'No encontramos cursos con esos filtros.' : 'Aún no hay cursos publicados.');
+    return;
+  }
+  grid.replaceChildren(...cursos.map(crearTarjetaCurso));
+}
+
+function crearTarjetaCurso(curso) {
+  const sinPrecio = curso.precio === null;
+  const gratis = curso.precio === 0;
+  const tarjeta = crearNodo('article', 'course-card');
+
+  const miniatura = crearNodo('div', 'course-card__thumb');
+  if (curso.imagen) {
+    const imagen = document.createElement('img');
+    imagen.src = curso.imagen;
+    imagen.alt = '';
+    imagen.loading = 'lazy';
+    imagen.addEventListener('error', () => imagen.remove());
+    miniatura.appendChild(imagen);
+  }
+  miniatura.appendChild(crearNodo('span', '', gratis ? 'Gratis' : (curso.categorias[0] || 'Curso')));
+
+  const cuerpo = crearNodo('div', 'course-card__body');
+  cuerpo.appendChild(crearNodo('h3', '', curso.titulo));
+  cuerpo.appendChild(crearNodo('div', 'course-card__meta', '👤 Instructor: ' + curso.instructor));
+  cuerpo.appendChild(crearCalificacion(curso.promedio_calificacion));
+
+  const textoPrecio = sinPrecio ? 'Sin precio' : (gratis ? 'Gratis' : formatoMoneda(curso.precio));
+  const pie = crearNodo('div', 'course-card__footer');
+  pie.appendChild(crearNodo('span', gratis ? 'price free' : 'price', textoPrecio));
+  pie.appendChild(crearNodo('span', 'pill', curso.nivel ? 'Nivel ' + curso.nivel : 'Nivel'));
+  cuerpo.appendChild(pie);
+
+  tarjeta.append(miniatura, cuerpo);
+  return tarjeta;
+}
+
+function crearCalificacion(promedio) {
+  const fila = crearNodo('div', 'course-card__meta stars');
+  if (promedio === null) {
+    fila.appendChild(crearNodo('span', 'course-card__nota', 'Sin reseñas'));
+    return fila;
+  }
+  const llenas = Math.round(promedio);
+  fila.append('★'.repeat(llenas) + '☆'.repeat(5 - llenas) + ' ');
+  fila.appendChild(crearNodo('span', 'course-card__nota', promedio.toFixed(1)));
+  return fila;
+}
+
+/* --- Crear curso ----------------------------------------------------------- */
+
+const CAMPOS_CURSO = {
+  titulo: 'cc-titulo',
+  descripcion: 'cc-descripcion',
+  nivel: 'cc-nivel',
+  precio: 'cc-precio',
+  categorias: 'cc-categorias',
+  imagen: 'cc-imagen'
+};
+
+function validarTituloCurso(el) {
+  const valor = el.value.trim();
+  if (!valor) return 'Escribe el título del curso.';
+  if (valor.length > 150) return 'El título es demasiado largo (máximo 150 caracteres).';
+  return '';
+}
+
+function validarDescripcionCurso(el) {
+  const valor = el.value.trim();
+  if (!valor) return 'Describe de qué trata el curso.';
+  if (valor.length > 5000) return 'La descripción es demasiado larga (máximo 5000 caracteres).';
+  return '';
+}
+
+function validarCategoriasCurso(el) {
+  return el.querySelector('input:checked') ? '' : 'Selecciona al menos una categoría.';
+}
+
+function validarNivelCurso(el) {
+  return el.value ? '' : 'Selecciona el nivel del curso.';
+}
+
+function validarPrecioCurso(el) {
+  const valor = el.value.trim();
+  if (!valor) return 'Escribe el precio (0 si el curso es gratis).';
+  if (!/^\d+(\.\d{1,2})?$/.test(valor)) return 'Escribe un número positivo con máximo dos decimales (ejemplo: 499.00).';
+  if (Number(valor) > 99999999.99) return 'El precio es demasiado alto.';
+  return '';
+}
+
+function validarImagenCurso(el) {
+  return el.value.trim().length > 255 ? 'La ruta es demasiado larga (máximo 255 caracteres).' : '';
+}
+
+function initCrearCurso() {
+  const form = document.getElementById('form-curso');
+  if (!form) return;
+
+  const caja = form.querySelector('.form-alert');
+  const botones = form.querySelectorAll('button[type="submit"]');
+  const actualizarVista = initVistaPrevia(form);
+
+  botones.forEach(boton => boton.addEventListener('click', () => {
+    form.dataset.publicar = boton.dataset.publicar;
+  }));
+
+  cargarCategoriasCurso(form.querySelector('#cc-categorias'), actualizarVista);
+
+  configurarValidacion(form, {
+    'cc-titulo': validarTituloCurso,
+    'cc-descripcion': validarDescripcionCurso,
+    'cc-categorias': validarCategoriasCurso,
+    'cc-nivel': validarNivelCurso,
+    'cc-precio': validarPrecioCurso,
+    'cc-imagen': validarImagenCurso
+  }, () => enviarCurso(form, caja, botones, actualizarVista));
+}
+
+function cargarCategoriasCurso(grupo, alTerminar) {
+  grupo.replaceChildren(crearNodo('span', 'field-hint', 'Cargando categorías…'));
+
+  return pedirApi('api/categorias', { headers: { Accept: 'application/json' } })
+    .then(({ respuesta, cuerpo }) => {
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudieron cargar las categorías.'));
+
+      if (!cuerpo.datos.length) {
+        grupo.replaceChildren(crearNodo('span', 'field-hint', 'Aún no hay categorías. Pide al administrador que cree una.'));
+        return;
+      }
+      grupo.replaceChildren(...cuerpo.datos.map(categoria => {
+        const etiqueta = crearNodo('label', 'categoria-opcion');
+        const casilla = document.createElement('input');
+        casilla.type = 'checkbox';
+        casilla.value = String(categoria.id_categoria);
+        casilla.dataset.nombre = categoria.nombre;
+        etiqueta.append(casilla, ' ' + categoria.nombre);
+        return etiqueta;
+      }));
+      alTerminar();
+    })
+    .catch(error => {
+      grupo.replaceChildren(
+        crearNodo('span', 'field-hint', mensajeDeError(error) + ' '),
+        crearBotonReintentar(() => cargarCategoriasCurso(grupo, alTerminar))
+      );
+    });
+}
+
+function initVistaPrevia(form) {
+  const contenedor = document.getElementById('vista-previa');
+  if (!contenedor) return () => {};
+
+  const instructor = form.dataset.instructor || '';
+
+  const actualizar = () => {
+    const textoPrecio = form.querySelector('#cc-precio').value.trim();
+    const precio = textoPrecio !== '' && !Number.isNaN(Number(textoPrecio)) ? Number(textoPrecio) : null;
+    const nivel = Number(form.querySelector('#cc-nivel').value) || null;
+    const categorias = Array.from(form.querySelectorAll('#cc-categorias input:checked'), c => c.dataset.nombre);
+
+    contenedor.replaceChildren(crearTarjetaCurso({
+      titulo: form.querySelector('#cc-titulo').value.trim() || 'Título del curso',
+      instructor,
+      precio,
+      nivel,
+      categorias,
+      imagen: null,
+      promedio_calificacion: null
+    }));
+  };
+
+  form.addEventListener('input', actualizar);
+  form.addEventListener('change', actualizar);
+  actualizar();
+  return actualizar;
+}
+
+function enviarCurso(form, caja, botones, actualizarVista) {
+  const publicar = form.dataset.publicar === '1';
+  const cuerpo = {
+    titulo: form.querySelector('#cc-titulo').value.trim(),
+    descripcion: form.querySelector('#cc-descripcion').value.trim(),
+    nivel: Number(form.querySelector('#cc-nivel').value),
+    precio: Number(form.querySelector('#cc-precio').value.trim()),
+    categorias: Array.from(form.querySelectorAll('#cc-categorias input:checked'), c => Number(c.value)),
+    activo: publicar
+  };
+  const imagen = form.querySelector('#cc-imagen').value.trim();
+  if (imagen) cuerpo.imagen = imagen;
+
+  botones.forEach(boton => { boton.disabled = true; });
+  mostrarAviso(caja, 'ok', 'Guardando el curso…');
+
+  return pedirApi('api/cursos', { method: 'POST', headers: CABECERAS_JSON, body: JSON.stringify(cuerpo) })
+    .then(({ respuesta, cuerpo: resultado }) => {
+      if (respuesta.status === 201) {
+        form.reset();
+        form.querySelectorAll('.field').forEach(campo => campo.classList.remove('has-error', 'is-valid'));
+        actualizarVista();
+        mostrarAviso(caja, 'ok', publicar ? 'Curso publicado correctamente.' : 'Borrador guardado correctamente.');
+        return;
+      }
+      if (respuesta.status === 400) {
+        (resultado.errores || []).forEach(error => {
+          const campo = form.querySelector('#' + (CAMPOS_CURSO[error.campo] || ''));
+          if (campo) mostrarError(campo, error.descripcion);
+        });
+        mostrarAviso(caja, 'error', textoDeErrorApi(resultado, 'Revisa los campos marcados.'));
+        return;
+      }
+      if (respuesta.status === 401) {
+        mostrarAviso(caja, 'error', 'Tu sesión expiró. Vuelve a iniciar sesión para publicar.');
+        return;
+      }
+      mostrarAviso(caja, 'error', resultado.mensaje || 'No se pudo guardar el curso.');
+    })
+    .catch(error => mostrarAviso(caja, 'error', mensajeDeError(error)))
+    .finally(() => botones.forEach(boton => { boton.disabled = false; }));
+}
+
+/* --- Categorías del administrador ------------------------------------------ */
+
+function validarNombreCategoria(el) {
+  const valor = el.value.trim();
+  if (!valor) return 'Escribe el nombre de la categoría.';
+  if (valor.length > 80) return 'El nombre es demasiado largo (máximo 80 caracteres).';
+  return '';
+}
+
+function validarDescripcionCategoria(el) {
+  return el.value.length > 1000 ? 'La descripción es demasiado larga (máximo 1000 caracteres).' : '';
+}
+
+function initAdminCategorias() {
+  const cuerpoTabla = document.getElementById('categorias-cuerpo');
+  const form = document.getElementById('form-categoria');
+  if (!cuerpoTabla || !form) return;
+
+  cargarTablaCategorias(cuerpoTabla);
+
+  configurarValidacion(form, {
+    'cat-nombre': validarNombreCategoria,
+    'cat-descripcion': validarDescripcionCategoria
+  }, () => enviarCategoria(form, form.querySelector('.form-alert'), cuerpoTabla));
+}
+
+function filaMensaje(texto, reintentar) {
+  const celda = crearNodo('td', '', texto + ' ');
+  celda.colSpan = 4;
+  if (reintentar) celda.appendChild(crearBotonReintentar(reintentar));
+  const fila = document.createElement('tr');
+  fila.appendChild(celda);
+  return fila;
+}
+
+function cargarTablaCategorias(cuerpoTabla) {
+  cuerpoTabla.replaceChildren(filaMensaje('Cargando categorías…'));
+
+  return pedirApi('api/categorias', { headers: { Accept: 'application/json' } })
+    .then(({ respuesta, cuerpo }) => {
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudieron cargar las categorías.'));
+
+      if (!cuerpo.datos.length) {
+        cuerpoTabla.replaceChildren(filaMensaje('Aún no hay categorías.'));
+        return;
+      }
+      cuerpoTabla.replaceChildren(...cuerpo.datos.map(categoria => {
+        const fila = document.createElement('tr');
+        [categoria.nombre, String(categoria.total_cursos), categoria.creada_por, formatoFecha(categoria.fecha_creacion)]
+          .forEach(texto => fila.appendChild(crearNodo('td', '', texto)));
+        return fila;
+      }));
+    })
+    .catch(error => {
+      cuerpoTabla.replaceChildren(filaMensaje(mensajeDeError(error), () => cargarTablaCategorias(cuerpoTabla)));
+    });
+}
+
+function enviarCategoria(form, caja, cuerpoTabla) {
+  const boton = form.querySelector('button[type="submit"]');
+  const cuerpo = { nombre: form.querySelector('#cat-nombre').value.trim() };
+  const descripcion = form.querySelector('#cat-descripcion').value.trim();
+  if (descripcion) cuerpo.descripcion = descripcion;
+
+  boton.disabled = true;
+  mostrarAviso(caja, 'ok', 'Guardando la categoría…');
+
+  return pedirApi('api/categorias', { method: 'POST', headers: CABECERAS_JSON, body: JSON.stringify(cuerpo) })
+    .then(({ respuesta, cuerpo: resultado }) => {
+      if (respuesta.status === 201) {
+        form.reset();
+        form.querySelectorAll('.field').forEach(campo => campo.classList.remove('has-error', 'is-valid'));
+        mostrarAviso(caja, 'ok', 'Categoría creada correctamente.');
+        cargarTablaCategorias(cuerpoTabla);
+        return;
+      }
+      if (respuesta.status === 400) {
+        (resultado.errores || []).forEach(error => {
+          const campo = form.querySelector(error.campo === 'nombre' ? '#cat-nombre' : '#cat-descripcion');
+          if (campo) mostrarError(campo, error.descripcion);
+        });
+        mostrarAviso(caja, 'error', textoDeErrorApi(resultado, 'Revisa los campos marcados.'));
+        return;
+      }
+      mostrarAviso(caja, 'error', resultado.mensaje || 'No se pudo crear la categoría.');
+    })
+    .catch(error => mostrarAviso(caja, 'error', mensajeDeError(error)))
+    .finally(() => { boton.disabled = false; });
 }

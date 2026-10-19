@@ -1,43 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel del estudiante | Walter</title>
-<link rel="icon" href="assets/Walter.ico">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<header class="app-topbar">
-  <div class="app-topbar__row">
-    <a href="index.html" class="app-topbar__brand">
-      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
-      Walter
-    </a>
-    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
-  <div class="app-topbar__auth">
-    <div class="topbar-user">
-      <div class="topbar-user__avatar"></div>
-      <div class="topbar-user__info">
-        <strong>Ana Torres</strong>
-        <span>Estudiante</span>
-      </div>
-    </div>
-  </div>
-  </div>
-  <nav class="window-switcher">
-    <a href="index.html">Pública</a>
-    <a href="login.html">Iniciar sesión</a>
-    <a href="register.html">Registro</a>
-    <a href="curso.html">Detalle de curso</a>
-    <a href="crear-curso.html">Crear curso</a>
-    <a href="estudiante.html" class="is-active">Estudiante</a>
-    <a href="instructor.html">Instructor</a>
-    <a href="admin.html">Administrador</a>
-    <a href="diploma.html">Diploma</a>
-  </nav>
-</header>
+<?php
+$titulo = 'Panel del estudiante | Walter';
+$activa = 'estudiante';
+require dirname(__DIR__) . '/_encabezado.php';
+?>
 
 <section class="window is-active" id="win-estudiante">
   <div class="shell">
@@ -46,7 +11,7 @@
         <div class="dash-nav__user">
           <div class="dash-nav__avatar"></div>
           <div>
-            <strong>Ana Torres</strong>
+            <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>
             <span>Estudiante</span>
           </div>
         </div>
@@ -54,7 +19,7 @@
         <a data-tab="kardex">Kardex</a>
         <a data-tab="mensajes">Mensajes</a>
         <a data-tab="perfil">Mi perfil</a>
-        <a href="login.html">Cerrar sesión</a>
+        <a href="index.php?ruta=salir">Cerrar sesión</a>
       </aside>
 
       <div class="dash-main">
@@ -79,7 +44,7 @@
                   <span style="font-size:0.8rem; color:var(--ink-soft);">Nivel 3 de 6 · Última actividad: hace 2 días</span>
                   <div class="progress-bar"><span style="width:50%;"></span></div>
                 </div>
-                <a href="curso.html" class="btn btn--ghost btn--sm">Continuar</a>
+                <a href="index.php?ruta=curso" class="btn btn--ghost btn--sm">Continuar</a>
               </div>
               <div class="course-row-card">
                 <div class="course-row-card__thumb"></div>
@@ -88,7 +53,7 @@
                   <span style="font-size:0.8rem; color:var(--ink-soft);">Nivel 4 de 5 · Última actividad: hoy</span>
                   <div class="progress-bar"><span style="width:80%;"></span></div>
                 </div>
-                <a href="curso.html" class="btn btn--ghost btn--sm">Continuar</a>
+                <a href="index.php?ruta=curso" class="btn btn--ghost btn--sm">Continuar</a>
               </div>
             </div>
           </div>
@@ -228,6 +193,4 @@
   </div>
 </section>
 
-<script src="script.js"></script>
-</body>
-</html>
+<?php require dirname(__DIR__) . '/_pie.php'; ?>

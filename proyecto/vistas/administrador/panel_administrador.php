@@ -1,43 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel del administrador | Walter</title>
-<link rel="icon" href="assets/Walter.ico">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<header class="app-topbar">
-  <div class="app-topbar__row">
-    <a href="index.html" class="app-topbar__brand">
-      <img src="assets/Logo_Walter.png" alt="Logo de Walter">
-      Walter
-    </a>
-    <span class="app-topbar__tag">Prototipo de ventanas — solo diseño</span>
-  <div class="app-topbar__auth">
-    <div class="topbar-user">
-      <div class="topbar-user__avatar" style="background:linear-gradient(135deg, var(--ink), var(--primary));"></div>
-      <div class="topbar-user__info">
-        <strong>Administrador</strong>
-        <span>Cuenta admin</span>
-      </div>
-    </div>
-  </div>
-  </div>
-  <nav class="window-switcher">
-    <a href="index.html">Pública</a>
-    <a href="login.html">Iniciar sesión</a>
-    <a href="register.html">Registro</a>
-    <a href="curso.html">Detalle de curso</a>
-    <a href="crear-curso.html">Crear curso</a>
-    <a href="estudiante.html">Estudiante</a>
-    <a href="instructor.html">Instructor</a>
-    <a href="admin.html" class="is-active">Administrador</a>
-    <a href="diploma.html">Diploma</a>
-  </nav>
-</header>
+<?php
+$titulo = 'Panel del administrador | Walter';
+$activa = 'admin';
+require dirname(__DIR__) . '/_encabezado.php';
+?>
 
 <section class="window is-active" id="win-admin">
   <div class="shell">
@@ -46,7 +11,7 @@
         <div class="dash-nav__user">
           <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--ink), var(--primary));"></div>
           <div>
-            <strong>Administrador</strong>
+            <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>
             <span>Cuenta admin</span>
           </div>
         </div>
@@ -54,7 +19,7 @@
         <a data-tab="categorias">Categorías</a>
         <a data-tab="comentarios">Comentarios</a>
         <a data-tab="reportes">Reportes</a>
-        <a href="login.html">Cerrar sesión</a>
+        <a href="index.php?ruta=salir">Cerrar sesión</a>
       </aside>
 
       <div class="dash-main">
@@ -105,29 +70,24 @@
             <div class="panel">
               <div class="panel__head"><h3>Categorías</h3></div>
               <table>
-                <thead><tr><th>Categoría</th><th>Cursos</th><th>Creada por</th><th>Fecha</th><th></th></tr></thead>
-                <tbody>
-                  <tr><td>IT &amp; Software</td><td>62</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
-                  <tr><td>Diseño</td><td>34</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
-                  <tr><td>Marketing</td><td>21</td><td>fislas</td><td>15 mar 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
-                  <tr><td>Negocios</td><td>18</td><td>admin</td><td>02 ene 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
-                  <tr><td>Idiomas</td><td>9</td><td>admin</td><td>20 abr 2025</td><td><button class="btn btn--outline btn--sm">Editar</button></td></tr>
-                </tbody>
+                <thead><tr><th>Categoría</th><th>Cursos</th><th>Creada por</th><th>Fecha</th></tr></thead>
+                <tbody id="categorias-cuerpo"><tr><td colspan="4">Cargando categorías…</td></tr></tbody>
               </table>
             </div>
             <div class="panel">
               <div class="panel__head"><h3 style="font-size:0.98rem;">Nueva categoría</h3></div>
-              <div style="display:flex; flex-direction:column; gap:12px;">
+              <form id="form-categoria" style="display:flex; flex-direction:column; gap:12px;" novalidate>
+                <div class="form-alert" role="status" aria-live="polite"></div>
                 <div class="field">
-                  <label>Nombre</label>
-                  <input type="text" placeholder="Ej. Fotografía">
+                  <label for="cat-nombre">Nombre</label>
+                  <input type="text" id="cat-nombre" name="nombre" placeholder="Ej. Fotografía" maxlength="80" required>
                 </div>
                 <div class="field">
-                  <label>Descripción</label>
-                  <textarea rows="3" placeholder="¿Qué tipo de cursos contendrá?"></textarea>
+                  <label for="cat-descripcion">Descripción</label>
+                  <textarea id="cat-descripcion" name="descripcion" rows="3" placeholder="¿Qué tipo de cursos contendrá?" maxlength="1000"></textarea>
                 </div>
-                <button class="btn btn--primary btn--sm" style="align-self:flex-start;">+ Agregar categoría</button>
-              </div>
+                <button type="submit" class="btn btn--primary btn--sm" style="align-self:flex-start;">+ Agregar categoría</button>
+              </form>
             </div>
           </div>
         </div>
@@ -163,13 +123,58 @@
         </div>
 
         <div class="dash-tab-panel" id="dashtab-reportes">
+          <div class="stat-row">
+            <div class="stat-card"><span>Cursos activos</span><strong>38</strong></div>
+            <div class="stat-card"><span>Inscripciones</span><strong>1,946</strong></div>
+            <div class="stat-card"><span>Cursos terminados</span><strong>812</strong></div>
+            <div class="stat-card"><span>Ingresos de la plataforma</span><strong>$64,310</strong></div>
+          </div>
+
           <div class="panel">
             <div class="panel__head">
-              <h3>Reporte de usuarios</h3>
+              <h3>Actividad por curso</h3>
+              <div class="filter-row">
+                <select><option>Categoría: todas</option><option>Programación</option><option>Bases de datos</option><option>Desarrollo web</option></select>
+                <select><option>Últimos 30 días</option><option>Últimos 90 días</option><option>Este año</option></select>
+              </div>
             </div>
-            <div class="chip-list" style="margin-bottom:16px;">
-              <span class="category-chip is-active">Instructores</span>
-              <span class="category-chip">Estudiantes</span>
+            <table>
+              <thead>
+                <tr><th>Curso</th><th>Instructor</th><th>Categoría</th><th>Inscritos</th><th>Terminaron</th><th>Calificación</th><th>Ingresos</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MySQL: relaciones, llaves e integridad referencial</td><td>Fausto Islas</td><td>Bases de datos</td><td>150</td>
+                  <td>72%<div class="progress-bar" style="margin-top:4px;"><span style="width:72%"></span></div></td>
+                  <td>4.8 ★</td><td>$5,980.00</td><td><span class="badge badge--ok">Activo</span></td>
+                </tr>
+                <tr>
+                  <td>MVC y arquitectura en tres capas con PHP</td><td>Fausto Islas</td><td>Programación</td><td>96</td>
+                  <td>43%<div class="progress-bar" style="margin-top:4px;"><span style="width:43%"></span></div></td>
+                  <td>4.6 ★</td><td>$8,940.00</td><td><span class="badge badge--ok">Activo</span></td>
+                </tr>
+                <tr>
+                  <td>Fundamentos de PHP orientado a objetos</td><td>L. Reyes</td><td>Programación</td><td>88</td>
+                  <td>63%<div class="progress-bar" style="margin-top:4px;"><span style="width:63%"></span></div></td>
+                  <td>4.7 ★</td><td>$7,150.00</td><td><span class="badge badge--ok">Activo</span></td>
+                </tr>
+                <tr>
+                  <td>Introducción a APIs REST para no programadores</td><td>M. Cantú</td><td>Desarrollo web</td><td>12</td>
+                  <td>66%<div class="progress-bar" style="margin-top:4px;"><span style="width:66%"></span></div></td>
+                  <td>4.1 ★</td><td>$1,240.00</td><td><span class="badge badge--warn">Poco movimiento</span></td>
+                </tr>
+                <tr>
+                  <td>HTML y CSS desde cero</td><td>L. Reyes</td><td>Desarrollo web</td><td>0</td>
+                  <td>0%<div class="progress-bar" style="margin-top:4px;"><span style="width:0%"></span></div></td>
+                  <td>Sin calificar</td><td>$0.00</td><td><span class="badge badge--off">Inactivo</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel__head">
+              <h3>Instructores con más ingresos</h3>
             </div>
             <table>
               <thead>
@@ -189,6 +194,4 @@
   </div>
 </section>
 
-<script src="script.js"></script>
-</body>
-</html>
+<?php require dirname(__DIR__) . '/_pie.php'; ?>
