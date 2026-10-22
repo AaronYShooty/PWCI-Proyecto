@@ -30,8 +30,6 @@ class CategoriaApiControlador extends ApiControlador
 
     private function crear(): void
     {
-        ControlAcceso::exigir(['administrador']);
-
         $cuerpo = $this->leerJson();
         if ($cuerpo === null) return;
 

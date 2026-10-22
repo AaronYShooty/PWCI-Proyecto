@@ -62,8 +62,6 @@ class CursoApiControlador extends ApiControlador
 
     private function crear(): void
     {
-        ControlAcceso::exigir(['instructor', 'administrador']);
-
         $cuerpo = $this->leerJson();
         if ($cuerpo === null) return;
 
@@ -81,8 +79,6 @@ class CursoApiControlador extends ApiControlador
 
     private function modificar(string $metodo, string $id): void
     {
-        ControlAcceso::exigir(['instructor', 'administrador']);
-
         $numero = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $curso = $numero === false ? null : $this->cursos()->obtenerPorId($numero, false);
         if (!$curso) {
