@@ -24,20 +24,19 @@ $rutas = [
     'salir'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->salir(),
 ];
 
-// Rol(es) que pueden entrar a cada pantalla protegida (middleware ControlAcceso).
-$protegidas = [
-    'curso'       => ['estudiante', 'instructor', 'administrador'],
-    'diploma'     => ['estudiante'],
-    'estudiante'  => ['estudiante'],
-    'crear-curso' => ['instructor'],
-    'instructor'  => ['instructor'],
-    'admin'       => ['administrador'],
+$middlewares = [
+    'curso'       => ['acceso:estudiante,instructor,administrador'],
+    'diploma'     => ['acceso:estudiante'],
+    'estudiante'  => ['acceso:estudiante'],
+    'crear-curso' => ['acceso:instructor'],
+    'instructor'  => ['acceso:instructor'],
+    'admin'       => ['acceso:administrador'],
 ];
 
 if (!isset($rutas[$ruta])) { http_response_code(404); exit('Página no encontrada.'); }
 
 try {
-    if (isset($protegidas[$ruta])) ControlAcceso::exigirVista($protegidas[$ruta]);
+    Middleware::ejecutar($middlewares[$ruta] ?? []);
     $rutas[$ruta]();
 } catch (Throwable $e) {
     error_log($e->getMessage());
