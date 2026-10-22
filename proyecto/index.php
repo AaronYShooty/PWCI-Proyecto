@@ -24,7 +24,6 @@ $rutas = [
     'salir'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->salir(),
 ];
 
-// Middlewares de cada pantalla protegida, en el orden en que se ejecutan.
 $middlewares = [
     'curso'       => ['acceso:estudiante,instructor,administrador'],
     'diploma'     => ['acceso:estudiante'],
