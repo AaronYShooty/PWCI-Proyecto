@@ -61,4 +61,10 @@ class SesionApiControlador extends ApiControlador
         $this->fallo($error, 401);
     }
 
+    private function eliminar(): void
+    {
+        $_SESSION = [];
+        session_destroy();
+        $this->exito('Sesión cerrada correctamente');
+    }
 }
