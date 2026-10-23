@@ -5,3 +5,6 @@ RewriteRule ^api/cursos/([^/]+)/?$ api/cursos.php?id=$1 [L,QSA]
 
 RewriteRule ^api/categorias/?$ api/categorias.php [L,QSA]
 RewriteRule ^api/categorias/([^/]+)/?$ api/categorias.php?id=$1 [L,QSA]
+
+RewriteRule ^api/sesiones/?$ api/sesiones.php [L,QSA]
+RewriteRule ^api/sesiones/([^/]+)/?$ api/sesiones.php?id=$1 [L,QSA]
