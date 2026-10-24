@@ -54,7 +54,7 @@ require dirname(__DIR__) . '/_encabezado.php';
 
     <noscript><p class="course-grid__estado">Activa JavaScript para ver el catálogo de cursos.</p></noscript>
 
-    <p class="footer-note">© 2026 Walter — Portal de cursos en línea · Prototipo generado para el Proyecto Integrador FE-PWCI-051</p>
+    <p class="footer-note">© 2026 WalterEdu — Portal de cursos en línea · Por Aaron Ernesto Ibarra Villarreal y Sinuhe Martinez Hernandez</p>
   </div>
 </section>
 

@@ -693,6 +693,12 @@ function crearTarjetaCurso(curso) {
   cuerpo.appendChild(pie);
 
   tarjeta.append(miniatura, cuerpo);
+  tarjeta.tabIndex = 0;
+  tarjeta.setAttribute('role', 'link');
+  tarjeta.style.cursor = 'pointer';
+  const irAlCurso = () => { window.location.href = 'index.php?ruta=curso&id=' + curso.id_curso; };
+  tarjeta.addEventListener('click', irAlCurso);
+  tarjeta.addEventListener('keydown', e => { if (e.key === 'Enter') irAlCurso(); });
   return tarjeta;
 }
 
