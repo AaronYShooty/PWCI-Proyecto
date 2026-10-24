@@ -1,13 +1,20 @@
 <?php
 $titulo = 'Detalle del curso | Walter';
 $activa = 'curso';
+/** @var array $curso  @var bool $inscrito  @var array|null $aviso  @var string $csrf */
+$rolActual = $_SESSION['usuario']['rol'] ?? 'visitante';
+$precio = (float) $curso['precio'];
 require dirname(__DIR__) . '/_encabezado.php';
 ?>
 
 <section class="window is-active" id="win-curso">
   <div class="shell">
 
-    <div class="breadcrumb">IT &amp; Software / Programación web</div>
+    <?php if (!empty($aviso)): ?>
+    <div class="form-alert is-visible form-alert--<?= $aviso['tipo'] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($aviso['mensaje']) ?></div>
+    <?php endif; ?>
+
+    <div class="breadcrumb"><?= htmlspecialchars(implode(' / ', $curso['categorias'] ?? [])) ?></div>
 
     <div class="course-detail">
       <div class="course-detail__main">
@@ -17,13 +24,15 @@ require dirname(__DIR__) . '/_encabezado.php';
           <span class="video-frame__label">Nivel 1 · Introducción a MVC</span>
         </div>
 
-        <h1 class="course-detail__title">MVC y arquitectura en tres capas con PHP</h1>
+        <h1 class="course-detail__title"><?= htmlspecialchars($curso['titulo']) ?></h1>
         <div class="course-detail__meta">
-          <span class="stars">★★★★☆ <span style="color:var(--ink-soft); font-weight:500;">4.3 (64 calificaciones)</span></span>
+          <?php if ($curso['promedio_calificacion'] !== null): $n = (int) round($curso['promedio_calificacion']); ?>
+          <span class="stars"><?= str_repeat('★', $n) . str_repeat('☆', 5 - $n) ?> <span style="color:var(--ink-soft); font-weight:500;"><?= number_format((float) $curso['promedio_calificacion'], 1) ?></span></span>
+          <?php else: ?>
+          <span style="color:var(--ink-soft);">Sin reseñas</span>
+          <?php endif; ?>
           <span>·</span>
-          <span>96 alumnos inscritos</span>
-          <span>·</span>
-          <span>👤 Instructor: F. Islas</span>
+          <span>👤 Instructor: <?= htmlspecialchars($curso['instructor']) ?></span>
         </div>
 
         <div class="tabs-row" id="courseTabs">
@@ -63,7 +72,7 @@ require dirname(__DIR__) . '/_encabezado.php';
         </div>
 
         <div class="tab-panel" id="tab-descripcion">
-          <p style="color:var(--ink-soft); line-height:1.6; max-width:64ch;">Aprende a estructurar un proyecto PHP siguiendo el patrón Modelo-Vista-Controlador, separando el acceso a datos, la lógica de negocio y la presentación en tres capas independientes. Ideal si ya conoces PHP básico y quieres ordenar tus proyectos como en un entorno profesional.</p>
+          <p style="color:var(--ink-soft); line-height:1.6; max-width:64ch;"><?= nl2br(htmlspecialchars($curso['descripcion'])) ?></p>
           <div class="chip-list" style="margin-top:14px;">
             <span class="pill">PHP puro</span>
             <span class="pill">POO</span>
@@ -92,10 +101,20 @@ require dirname(__DIR__) . '/_encabezado.php';
 
       <aside class="course-detail__side">
         <div class="panel">
-          <div class="price" style="font-size:1.6rem;">$499.00</div>
-          <span class="field-hint">Acceso de por vida a los 6 niveles</span>
-          <button class="btn btn--primary" style="width:100%; margin-top:16px;">Comprar curso</button>
-          <button class="btn btn--outline" style="width:100%; margin-top:8px;">Ver nivel 1 gratis</button>
+          <div class="price" style="font-size:1.6rem;"><?= $precio > 0 ? '$' . number_format($precio, 2) : 'Gratis' ?></div>
+          <span class="field-hint">Acceso de por vida</span>
+          <?php if ($inscrito): ?>
+          <div class="form-alert is-visible form-alert--ok" style="margin-top:16px;">✔ Ya estás inscrito en este curso</div>
+          <?php elseif ($rolActual === 'estudiante'): ?>
+          <form method="post" action="index.php?ruta=comprar">
+            <input type="hidden" name="curso" value="<?= (int) $curso['id_curso'] ?>">
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+            <button type="submit" class="btn btn--primary" style="width:100%; margin-top:16px;"><?= $precio > 0 ? 'Comprar curso' : 'Inscribirme gratis' ?></button>
+          </form>
+          <?php if ($precio > 0): ?><span class="field-hint" style="display:block; margin-top:8px;">🔒 Pago seguro con Stripe</span><?php endif; ?>
+          <?php else: ?>
+          <span class="field-hint" style="display:block; margin-top:16px;">Inicia sesión como estudiante para comprar este curso.</span>
+          <?php endif; ?>
           <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line); font-size:0.84rem; color:var(--ink-soft); display:flex; flex-direction:column; gap:8px;">
             <span>📄 6 niveles · con video obligatorio</span>
             <span>💬 Mensajería directa con el instructor</span>
@@ -106,7 +125,7 @@ require dirname(__DIR__) . '/_encabezado.php';
           <div class="panel__head"><h3 style="font-size:0.95rem;">Instructor</h3></div>
           <div style="display:flex; gap:10px; align-items:center;">
             <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
-            <div><strong style="display:block; font-size:0.9rem;">Fausto Islas</strong><span style="font-size:0.78rem; color:var(--ink-soft);">12 cursos publicados</span></div>
+            <div><strong style="display:block; font-size:0.9rem;"><?= htmlspecialchars($curso['instructor']) ?></strong><span style="font-size:0.78rem; color:var(--ink-soft);">Instructor</span></div>
           </div>
         </div>
       </aside>

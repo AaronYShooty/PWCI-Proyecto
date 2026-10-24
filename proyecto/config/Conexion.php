@@ -30,7 +30,7 @@ class Conexion
                 ]);
             } catch (PDOException $ex) {
                 error_log($ex->getMessage());
-                throw new RuntimeException('No fue posible conectar con la base de datos.');
+                throw new RuntimeException('No fue posible conectar con la base de datos.', 0, $ex);
             }
         }
         return $this->pdo;
