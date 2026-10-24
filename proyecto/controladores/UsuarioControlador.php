@@ -26,7 +26,7 @@ class UsuarioControlador extends Controlador
         } elseif ($u && password_verify($clave, $u['clave_hash'])) {
             $this->usuarios->reiniciarIntentos((int) $u['id']);
             session_regenerate_id(true);
-            $_SESSION['usuario'] = ['id' => (int) $u['id'], 'nombre' => $u['nombre_completo'], 'rol' => $u['rol']];
+            $_SESSION['usuario'] = ['id' => (int) $u['id'], 'nombre' => $u['nombre_completo'], 'rol' => $u['rol'], 'foto' => $u['foto']];
             $paneles = ['estudiante' => 'estudiante', 'instructor' => 'instructor', 'administrador' => 'admin'];
             $this->redirigir($paneles[$u['rol']]);
         } elseif ($u) {
@@ -107,6 +107,7 @@ class UsuarioControlador extends Controlador
             unlink(dirname(__DIR__) . '/' . $u['foto']);
         }
         $_SESSION['usuario']['nombre'] = $datos['nombre'];
+        $_SESSION['usuario']['foto'] = $datos['foto'];
         $u = $this->usuarios->buscarPorId($id);
         $this->vista('perfil', ['usuario' => $u, 'aviso' => 'Perfil actualizado correctamente.']);
     }
