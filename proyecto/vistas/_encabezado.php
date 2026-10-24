@@ -36,7 +36,11 @@ $avatarEstilo = [
     <div class="app-topbar__auth">
 <?php if ($usuario): ?>
       <a class="topbar-user" href="index.php?ruta=<?= $panelDe[$rol] ?>" style="text-decoration:none; color:inherit;">
+<?php if (!empty($usuario['foto'])): ?>
+        <div class="topbar-user__avatar" style="background:url('<?= htmlspecialchars($usuario['foto']) ?>') center / cover;"></div>
+<?php else: ?>
         <div class="topbar-user__avatar"<?= isset($avatarEstilo[$rol]) ? ' style="' . $avatarEstilo[$rol] . '"' : '' ?>></div>
+<?php endif; ?>
         <div class="topbar-user__info">
           <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>
           <span><?= $etiquetaRol[$rol] ?></span>

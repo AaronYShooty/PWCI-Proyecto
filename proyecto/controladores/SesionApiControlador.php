@@ -51,7 +51,7 @@ class SesionApiControlador extends ApiControlador
         } elseif ($u && password_verify($clave, $u['clave_hash'])) {
             (new Usuario($this->conexion->obtener()))->reiniciarIntentos((int) $u['id']);
             session_regenerate_id(true);
-            $_SESSION['usuario'] = ['id' => (int) $u['id'], 'nombre' => $u['nombre_completo'], 'rol' => $u['rol']];
+            $_SESSION['usuario'] = ['id' => (int) $u['id'], 'nombre' => $u['nombre_completo'], 'rol' => $u['rol'], 'foto' => $u['foto']];
             $this->exito('Inicio de sesión exitoso', $_SESSION['usuario']);
             return;
         } elseif ($u) {
