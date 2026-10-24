@@ -22,6 +22,7 @@ $rutas = [
     'instructor'  => fn() => (new UsuarioControlador(new Usuario($pdo())))->panelInstructor(),
     'admin'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->panelAdministrador(),
     'salir'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->salir(),
+    'perfil'      => fn() => (new UsuarioControlador(new Usuario($pdo())))->perfil(),
 ];
 
 $middlewares = [
@@ -31,6 +32,7 @@ $middlewares = [
     'crear-curso' => ['acceso:instructor'],
     'instructor'  => ['acceso:instructor'],
     'admin'       => ['acceso:administrador'],
+    'perfil'      => ['acceso:estudiante,instructor,administrador'],
 ];
 
 if (!isset($rutas[$ruta])) { http_response_code(404); exit('Página no encontrada.'); }

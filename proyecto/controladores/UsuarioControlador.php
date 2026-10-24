@@ -70,6 +70,47 @@ class UsuarioControlador extends Controlador
         $this->vista('publico/registro', ['errores' => $errores, 'datos' => $datos]);
     }
 
+    public function perfil(): void
+    {
+        $id = (int) $_SESSION['usuario']['id'];
+        $u = $this->usuarios->buscarPorId($id);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->vista('perfil', ['usuario' => $u]);
+            return;
+        }
+
+        $datos = [
+            'nombre'     => preg_replace('/\s+/', ' ', trim($_POST['nombre'] ?? '')),
+            'email'      => strtolower(trim($_POST['correo'] ?? '')),
+            'genero'     => $_POST['genero'] ?? '',
+            'nacimiento' => $_POST['nacimiento'] ?? '',
+        ];
+
+        $errores = $this->validarPerfil($datos, $u['email']);
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $errorFoto = $this->validarFoto($_FILES['foto']);
+            if ($errorFoto) $errores['foto'] = $errorFoto;
+        }
+
+        if ($errores) {
+            $this->vista('perfil', ['usuario' => $u, 'errores' => $errores, 'datos' => $datos]);
+            return;
+        }
+
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $datos['foto'] = $this->guardarFoto($_FILES['foto']);
+        } else {
+            $datos['foto'] = $u['foto'];
+        }
+        $this->usuarios->actualizar($id, $datos);
+        if ($u['foto'] && $u['foto'] !== $datos['foto']) {
+            unlink(dirname(__DIR__) . '/' . $u['foto']);
+        }
+        $_SESSION['usuario']['nombre'] = $datos['nombre'];
+        $u = $this->usuarios->buscarPorId($id);
+        $this->vista('perfil', ['usuario' => $u, 'aviso' => 'Perfil actualizado correctamente.']);
+    }
+
     private function validarFoto(?array $f): ?string
     {
         if (!$f || $f['error'] === UPLOAD_ERR_NO_FILE) return 'La foto de perfil es obligatoria.';
@@ -133,6 +174,37 @@ class UsuarioControlador extends Controlador
 
         if (!in_array($d['rol'], ['estudiante', 'instructor'], true)) {
             $errores['rol'] = 'Selecciona un rol válido.';
+        }
+
+        return $errores;
+    }
+
+    private function validarPerfil(array $d, string $emailActual): array
+    {
+        $errores = [];
+
+        $largoNombre = mb_strlen($d['nombre']);
+        if ($largoNombre < 5 || $largoNombre > 80 || !preg_match("/^[a-záéíóúüñ]+(?:[ '\-][a-záéíóúüñ]+)+$/iu", $d['nombre'])) {
+            $errores['nombre'] = 'Escribe nombre y apellidos válidos (5 a 80 caracteres, solo letras).';
+        }
+
+        if (strlen($d['email']) > 254 || !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) {
+            $errores['email'] = 'El correo no es válido.';
+        }
+        elseif ($this->usuarios->existeEmail($d['email']) && $d['email'] !== $emailActual) {
+            $errores['email'] = 'Ese correo ya está registrado.';
+        }
+
+        if (!in_array($d['genero'], ['Femenino', 'Masculino', 'Otro', 'Prefiero no decir'], true)) {
+            $errores['genero'] = 'Selecciona una opción.';
+        }
+
+        $hoy = new DateTime('today');
+        $fecha = DateTime::createFromFormat('Y-m-d', $d['nacimiento']);
+        if (!$fecha || $fecha->format('Y-m-d') !== $d['nacimiento']) {
+            $errores['nacimiento'] = 'La fecha no es válida.';
+        } elseif ($fecha > $hoy || $fecha->diff($hoy)->y < 13 || $fecha->diff($hoy)->y > 120) {
+            $errores['nacimiento'] = 'Debes tener entre 13 y 120 años.';
         }
 
         return $errores;

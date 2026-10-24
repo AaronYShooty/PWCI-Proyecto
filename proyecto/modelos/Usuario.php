@@ -9,6 +9,14 @@ class Usuario
         $st->execute(['email' => $email]);
         return $st->fetch() ?: null;
     }
+
+    public function buscarPorId(int $id): ?array
+    {
+        $st = $this->db->prepare('SELECT * FROM usuarios WHERE id = :id');
+        $st->execute(['id' => $id]);
+        return $st->fetch() ?: null;
+    }
+
     public function registrarFallo(int $id): void
     {
         $this->db->prepare(
@@ -46,5 +54,18 @@ class Usuario
         return (int) $this->db->lastInsertId();
     }
 
-    // TODO: actualizarPerfil()
+    public function actualizar(int $id, array $datos): void
+    {
+        $st = $this->db->prepare(
+            'UPDATE usuarios SET nombre_completo = :nombre, genero = :genero, fecha_nacimiento = :nacimiento, email = :email, foto = :foto WHERE id = :id'
+        );
+        $st->execute([
+            'id'        => $id,
+            'nombre'    => $datos['nombre'],
+            'genero'    => $datos['genero'],
+            'nacimiento'=> $datos['nacimiento'],
+            'email'     => $datos['email'],
+            'foto'      => $datos['foto'] ?? null,
+        ]);
+    }
 }

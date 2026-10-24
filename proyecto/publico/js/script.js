@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMostrarContrasena();
   initFormLogin();
   initFormRegistro();
+  initFormPerfil();
   initCatalogo();
   initCrearCurso();
   initAdminCategorias();
@@ -447,11 +448,36 @@ function initFormRegistro() {
   }
 }
 
+function initFormPerfil() {
+  const form = document.getElementById('form-perfil');
+  if (!form) return;
+
+  const correo = form.querySelector('#perfil-email');
+  if (correo) {
+    correo.addEventListener('blur', () => { correo.value = correo.value.trim().toLowerCase(); });
+  }
+
+  const fecha = form.querySelector('#perfil-fecha');
+  if (fecha) fecha.max = new Date().toISOString().slice(0, 10);
+
+  initSubidaFoto(form, 'perfil');
+
+  configurarValidacion(form, {
+    'perfil-foto': el => (el.files && el.files[0]) ? validarFoto(el) : '',
+    'perfil-nombre': validarNombre,
+    'perfil-email': validarCorreo,
+    'perfil-genero': validarGenero,
+    'perfil-fecha': validarFechaNacimiento
+  }, (formulario) => {
+    formulario.submit();
+  });
+}
+
 // Botón "Subir foto": abre el selector, valida el archivo y muestra la miniatura.
-function initSubidaFoto(form) {
-  const input = form.querySelector('#reg-foto');
-  const boton = form.querySelector('#reg-foto-btn');
-  const preview = form.querySelector('#reg-foto-preview');
+function initSubidaFoto(form, prefijo = 'reg') {
+  const input = form.querySelector('#' + prefijo + '-foto');
+  const boton = form.querySelector('#' + prefijo + '-foto-btn');
+  const preview = form.querySelector('#' + prefijo + '-foto-preview');
   if (!input || !boton) return;
 
   boton.addEventListener('click', () => input.click());
@@ -461,8 +487,9 @@ function initSubidaFoto(form) {
     const archivo = input.files && input.files[0];
 
     if (!archivo || validarFoto(input)) {
-      preview.style.backgroundImage = '';
-      preview.textContent = '🖼️';
+      const original = preview.dataset.original;
+      preview.style.backgroundImage = original ? 'url("' + original + '")' : '';
+      preview.textContent = original ? '' : '🖼️';
       return;
     }
     preview.textContent = '';
