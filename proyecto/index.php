@@ -11,40 +11,63 @@ $pdo = static function (): PDO {
     return $conexion ??= (new Conexion())->obtener();
 };
 
+// Controladores armados con sus dependencias (inyección por constructor).
+$curso   = fn() => new CursoControlador(new Curso($pdo()), new Inscripcion($pdo()), new Nivel($pdo()), new Comentario($pdo()));
+$usuario = fn() => new UsuarioControlador(new Usuario($pdo()));
+$pago    = fn() => new PagoControlador(new Curso($pdo()), new Inscripcion($pdo()), new StripeServicio());
+$panel   = fn() => new PanelControlador(
+    new Usuario($pdo()), new Curso($pdo()), new Categoria($pdo()), new Inscripcion($pdo()),
+    new Comentario($pdo()), new Mensaje($pdo()), new Nivel($pdo())
+);
+
 $rutas = [
-    'inicio'      => fn() => (new CursoControlador(new Curso($pdo())))->inicio(),
-    'curso'       => fn() => (new CursoControlador(new Curso($pdo()), new Inscripcion($pdo())))->detalle(),
-    'crear-curso' => fn() => (new CursoControlador(new Curso($pdo())))->crear(),
-    'diploma'     => fn() => (new CursoControlador(new Curso($pdo())))->diploma(),
-    'login'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->login(),
-    'registro'    => fn() => (new UsuarioControlador(new Usuario($pdo())))->registro(),
-    'estudiante'  => fn() => (new UsuarioControlador(new Usuario($pdo())))->panelEstudiante(),
-    'instructor'  => fn() => (new UsuarioControlador(new Usuario($pdo())))->panelInstructor(),
-    'admin'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->panelAdministrador(),
-    'salir'       => fn() => (new UsuarioControlador(new Usuario($pdo())))->salir(),
-    'perfil'      => fn() => (new UsuarioControlador(new Usuario($pdo())))->perfil(),
-    'comprar'        => fn() => (new PagoControlador(new Curso($pdo()), new Inscripcion($pdo()), new StripeServicio()))->iniciar(),
-    'pago-exito'     => fn() => (new PagoControlador(new Curso($pdo()), new Inscripcion($pdo()), new StripeServicio()))->exito(),
-    'pago-cancelado' => fn() => (new PagoControlador(new Curso($pdo()), new Inscripcion($pdo()), new StripeServicio()))->cancelado(),
+    'inicio'      => fn() => $curso()->inicio(),
+    'curso'       => fn() => $curso()->detalle(),
+    'crear-curso' => fn() => $curso()->crear(),
+    'login'       => fn() => $usuario()->login(),
+    'registro'    => fn() => $usuario()->registro(),
+    'salir'       => fn() => $usuario()->salir(),
+    'perfil'      => fn() => $usuario()->perfil(),
+
+    'estudiante'  => fn() => $panel()->estudiante(),
+    'instructor'  => fn() => $panel()->instructor(),
+    'admin'       => fn() => $panel()->administrador(),
+    'diploma'     => fn() => $panel()->diploma(),
+    'mensaje-enviar'      => fn() => $panel()->mensajeEnviar(),
+    'curso-estado'        => fn() => $panel()->cursoEstado(),
+    'usuario-estado'      => fn() => $panel()->usuarioEstado(),
+    'comentario-eliminar' => fn() => $panel()->comentarioEliminar(),
+
+    'comprar'        => fn() => $pago()->comprar(),
+    'pago'           => fn() => $pago()->formulario(),
+    'pago-confirmar' => fn() => $pago()->confirmar(),
+    'pago-retorno'   => fn() => $pago()->retorno(),
 ];
 
 $middlewares = [
     'curso'       => ['acceso:estudiante,instructor,administrador'],
-    'diploma'     => ['acceso:estudiante'],
-    'estudiante'  => ['acceso:estudiante'],
+    'perfil'      => ['acceso:estudiante,instructor,administrador'],
     'crear-curso' => ['acceso:instructor'],
     'instructor'  => ['acceso:instructor'],
+    'curso-estado' => ['acceso:instructor'],
+    'estudiante'  => ['acceso:estudiante'],
+    'diploma'     => ['acceso:estudiante'],
     'admin'       => ['acceso:administrador'],
-    'perfil'      => ['acceso:estudiante,instructor,administrador'],
+    'usuario-estado'      => ['acceso:administrador'],
+    'comentario-eliminar' => ['acceso:administrador'],
+    'mensaje-enviar'      => ['acceso:estudiante,instructor'],
     'comprar'        => ['acceso:estudiante'],
-    'pago-exito'     => ['acceso:estudiante'],
-    'pago-cancelado' => ['acceso:estudiante'],
+    'pago'           => ['acceso:estudiante'],
+    'pago-confirmar' => ['acceso:estudiante'],
+    'pago-retorno'   => ['acceso:estudiante'],
 ];
+// Rutas que responden JSON: el middleware contesta 401/403 en JSON en lugar de redirigir.
+$rutasJson = ['pago-confirmar'];
 
 if (!isset($rutas[$ruta])) { http_response_code(404); exit('Página no encontrada.'); }
 
 try {
-    Middleware::ejecutar($middlewares[$ruta] ?? []);
+    Middleware::ejecutar($middlewares[$ruta] ?? [], in_array($ruta, $rutasJson, true));
     $rutas[$ruta]();
 } catch (Throwable $e) {
     error_log($e->getMessage());

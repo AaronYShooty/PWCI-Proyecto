@@ -1,6 +1,10 @@
 <?php
+/** @var array|null $aviso @var string $csrf @var array $resumen @var array $misCursos @var array $niveles @var array $ventas
+ *  @var array $detalle @var array $porForma @var float $totalVentas @var array $filtros @var array $categorias @var array $perfil
+ *  @var array $contactos @var array|null $conActual @var array $hilo */
 $titulo = 'Panel del instructor | Walter';
 $activa = 'instructor';
+$panelRuta = 'instructor';
 require dirname(__DIR__) . '/_encabezado.php';
 ?>
 
@@ -9,7 +13,7 @@ require dirname(__DIR__) . '/_encabezado.php';
     <div class="dash">
       <aside class="dash-nav">
         <div class="dash-nav__user">
-          <div class="dash-nav__avatar" style="background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
+          <div class="dash-nav__avatar" style="<?= Formato::avatar($perfil['foto'], 'background:linear-gradient(135deg, var(--teal), var(--primary));') ?>"></div>
           <div>
             <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>
             <span>Instructor</span>
@@ -23,6 +27,9 @@ require dirname(__DIR__) . '/_encabezado.php';
       </aside>
 
       <div class="dash-main">
+        <?php if (!empty($aviso)): ?>
+        <div class="form-alert is-visible form-alert--<?= $aviso['tipo'] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($aviso['mensaje']) ?></div>
+        <?php endif; ?>
 
         <div class="dash-tab-panel is-active" id="dashtab-mis-cursos">
           <div class="panel__head" style="margin-bottom:-6px;">
@@ -31,164 +38,139 @@ require dirname(__DIR__) . '/_encabezado.php';
           </div>
 
           <div class="stat-row">
-            <div class="stat-card"><span>Cursos activos</span><strong>5</strong></div>
-            <div class="stat-card"><span>Alumnos inscritos</span><strong>312</strong></div>
-            <div class="stat-card"><span>Ingresos del mes</span><strong>$18,420</strong></div>
-            <div class="stat-card"><span>Calificación promedio</span><strong>4.7</strong></div>
+            <div class="stat-card"><span>Cursos activos</span><strong><?= (int) $resumen['cursos_activos'] ?></strong></div>
+            <div class="stat-card"><span>Alumnos inscritos</span><strong><?= (int) $resumen['alumnos'] ?></strong></div>
+            <div class="stat-card"><span>Ingresos del mes</span><strong><?= Formato::moneda((float) $resumen['ingresos_mes']) ?></strong></div>
+            <div class="stat-card"><span>Calificación promedio</span><strong><?= $resumen['calificacion'] === null ? '—' : number_format((float) $resumen['calificacion'], 1) ?></strong></div>
           </div>
 
           <div class="panel">
             <div class="panel__head"><h3>Mis cursos publicados</h3></div>
+            <?php if (!$misCursos): ?>
+              <p class="field-hint">Todavía no has publicado cursos. <a href="index.php?ruta=crear-curso">Crea el primero</a>.</p>
+            <?php else: ?>
             <div style="display:flex; flex-direction:column; gap:12px;">
+              <?php foreach ($misCursos as $c): ?>
               <div class="course-row-card">
                 <div class="course-row-card__thumb"></div>
                 <div class="course-row-card__body">
-                  <h4>MVC y arquitectura en tres capas con PHP</h4>
-                  <span style="font-size:0.8rem; color:var(--ink-soft);">96 alumnos · 6 niveles · Activo</span>
+                  <h4><?= htmlspecialchars($c['titulo']) ?></h4>
+                  <span style="font-size:0.8rem; color:var(--ink-soft);">
+                    <?= (int) $c['alumnos'] ?> alumnos · <?= (int) $c['total_niveles'] ?> niveles · <?= $c['activo'] ? 'Activo' : 'Dado de baja' ?>
+                  </span>
                 </div>
-                <a href="index.php?ruta=crear-curso" class="btn btn--outline btn--sm">Editar</a>
+                <?php if ($c['activo']): ?>
+                  <a href="index.php?ruta=curso&amp;id=<?= (int) $c['curso_id'] ?>" class="btn btn--ghost btn--sm">Ver</a>
+                <?php endif; ?>
+                <form method="post" action="index.php?ruta=curso-estado" style="margin:0;"
+                      <?= $c['activo'] ? 'onsubmit="return confirm(\'El curso dejará de mostrarse en el catálogo, pero se conserva en tus reportes. ¿Dar de baja?\');"' : '' ?>>
+                  <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                  <input type="hidden" name="curso" value="<?= (int) $c['curso_id'] ?>">
+                  <input type="hidden" name="accion" value="<?= $c['activo'] ? 'baja' : 'reactivar' ?>">
+                  <button type="submit" class="btn <?= $c['activo'] ? 'btn--danger' : 'btn--outline' ?> btn--sm"><?= $c['activo'] ? 'Dar de baja' : 'Reactivar' ?></button>
+                </form>
               </div>
-              <div class="course-row-card">
-                <div class="course-row-card__thumb"></div>
-                <div class="course-row-card__body">
-                  <h4>MySQL: relaciones, llaves e integridad referencial</h4>
-                  <span style="font-size:0.8rem; color:var(--ink-soft);">150 alumnos · 4 niveles · Activo</span>
-                </div>
-                <a href="index.php?ruta=crear-curso" class="btn btn--outline btn--sm">Editar</a>
-              </div>
+              <?php endforeach; ?>
             </div>
+            <?php endif; ?>
           </div>
 
+          <?php foreach (array_slice($misCursos, 0, 5) as $c): ?>
           <div class="panel">
-            <div class="panel__head"><h3>Contenido del curso: MVC y arquitectura en tres capas</h3></div>
+            <div class="panel__head"><h3>Contenido del curso: <?= htmlspecialchars($c['titulo']) ?></h3></div>
             <div class="chip-list">
-              <span class="pill">Nivel 1 · Video ✔</span>
-              <span class="pill">Nivel 2 · Video ✔</span>
-              <span class="pill">Nivel 3 · Video ✔</span>
-              <span class="pill" style="background:#fff3da; color:#b3760a;">Nivel 4 · Falta video</span>
-              <span class="pill" style="background:var(--surface-alt);">+ Agregar nivel</span>
+              <?php foreach ($niveles[$c['curso_id']] as $n): ?>
+                <span class="pill">Nivel <?= (int) $n['orden'] ?> · <?= htmlspecialchars($n['titulo']) ?> · Video ✔</span>
+              <?php endforeach; ?>
+              <?php if (!$niveles[$c['curso_id']]): ?>
+                <span class="pill" style="background:#fff3da; color:#b3760a;">Sin niveles publicados</span>
+              <?php endif; ?>
             </div>
           </div>
+          <?php endforeach; ?>
         </div>
 
         <div class="dash-tab-panel" id="dashtab-ventas">
           <div class="panel">
-            <div class="panel__head"><h3>Resumen de ventas por curso</h3>
-              <div class="filter-row">
-                <select><option>Categoría: todas</option></select>
-                <select><option>Solo activos</option></select>
-              </div>
+            <div class="panel__head">
+              <h3>Resumen de ventas por curso</h3>
+              <form class="filter-row" method="get" action="index.php">
+                <input type="hidden" name="ruta" value="instructor">
+                <input type="hidden" name="tab" value="ventas">
+                <select name="categoria" aria-label="Categoría">
+                  <option value="">Categoría: todas</option>
+                  <?php foreach ($categorias as $cat): ?>
+                  <option value="<?= $cat['id_categoria'] ?>"<?= (int) ($filtros['categoria'] ?? 0) === $cat['id_categoria'] ? ' selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <select name="cursos" aria-label="Estado del curso">
+                  <option value="">Activos e inactivos</option>
+                  <option value="activos"<?= ($filtros['cursos'] ?? '') === 'activos' ? ' selected' : '' ?>>Solo activos</option>
+                </select>
+                <input type="date" name="desde" value="<?= htmlspecialchars($filtros['desde'] ?? '') ?>" style="width:150px;" title="Curso creado desde" aria-label="Curso creado desde">
+                <input type="date" name="hasta" value="<?= htmlspecialchars($filtros['hasta'] ?? '') ?>" style="width:150px;" title="Curso creado hasta" aria-label="Curso creado hasta">
+                <button type="submit" class="btn btn--primary btn--sm">Filtrar</button>
+                <a href="index.php?ruta=instructor&amp;tab=ventas" class="btn btn--ghost btn--sm">Limpiar</a>
+              </form>
             </div>
             <table>
               <thead>
-                <tr><th>Curso</th><th>Alumnos</th><th>Nivel promedio</th><th>Ingresos</th><th>Estado</th><th></th></tr>
+                <tr><th>Curso</th><th>Alumnos</th><th>Nivel promedio</th><th>Ingresos</th><th>Estado</th></tr>
               </thead>
               <tbody>
+                <?php if (!$ventas): ?>
+                <tr><td colspan="5" class="field-hint">No hay cursos que coincidan con estos filtros.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($ventas as $v): ?>
                 <tr>
-                  <td>MVC y arquitectura en tres capas con PHP</td>
-                  <td>96</td>
-                  <td>3.4 de 6</td>
-                  <td>$8,940.00</td>
-                  <td><span class="badge badge--ok">Activo</span></td>
-                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
+                  <td><?= htmlspecialchars($v['titulo']) ?></td>
+                  <td><?= (int) $v['alumnos'] ?></td>
+                  <td><?= number_format((float) $v['nivel_promedio'], 1) ?> de <?= (int) $v['total_niveles'] ?></td>
+                  <td><?= Formato::moneda((float) $v['ingresos']) ?></td>
+                  <td><?= $v['activo'] ? '<span class="badge badge--ok">Activo</span>' : '<span class="badge badge--off">Dado de baja</span>' ?></td>
                 </tr>
-                <tr>
-                  <td>MySQL: relaciones, llaves e integridad referencial</td>
-                  <td>150</td>
-                  <td>4.0 de 4</td>
-                  <td>$5,980.00</td>
-                  <td><span class="badge badge--ok">Activo</span></td>
-                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
-                </tr>
-                <tr>
-                  <td>Introducción a APIs REST para no programadores</td>
-                  <td>66</td>
-                  <td>2.0 de 2</td>
-                  <td>$0.00</td>
-                  <td><span class="badge badge--off">Dado de baja</span></td>
-                  <td><button class="btn btn--outline btn--sm">Ver detalle</button></td>
-                </tr>
+                <?php endforeach; ?>
               </tbody>
             </table>
-            <p class="field-hint" style="margin-top:12px;">Total de ingresos: $14,920.00 · Tarjeta $10,320.00 · PayPal $4,600.00</p>
+            <p class="field-hint" style="margin-top:12px;">
+              Total de ingresos: <?= Formato::moneda($totalVentas) ?>
+              <?php foreach ($porForma as $forma => $monto): ?> · <?= htmlspecialchars($forma) ?> <?= Formato::moneda((float) $monto) ?><?php endforeach; ?>
+            </p>
           </div>
+
+          <?php foreach ($ventas as $v): $alumnos = $detalle[$v['curso_id']] ?? []; ?>
+          <div class="panel">
+            <details>
+              <summary style="cursor:pointer; font-weight:600;">
+                Detalle: <?= htmlspecialchars($v['titulo']) ?> · <?= count($alumnos) ?> alumno(s) · <?= Formato::moneda((float) $v['ingresos']) ?>
+              </summary>
+              <table style="margin-top:12px;">
+                <thead><tr><th>Alumno</th><th>Inscripción</th><th>Nivel de avance</th><th>Precio pagado</th><th>Forma de pago</th></tr></thead>
+                <tbody>
+                  <?php if (!$alumnos): ?><tr><td colspan="5" class="field-hint">Aún no hay alumnos inscritos.</td></tr><?php endif; ?>
+                  <?php foreach ($alumnos as $a): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($a['alumno']) ?></td>
+                    <td><?= Formato::fecha($a['fecha_inscripcion']) ?></td>
+                    <td><?= (int) $a['vistos'] ?> de <?= (int) $v['total_niveles'] ?></td>
+                    <td><?= Formato::moneda((float) $a['precio_pagado']) ?></td>
+                    <td><?= htmlspecialchars($a['forma_pago']) ?></td>
+                  </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+              <p class="field-hint" style="margin-top:8px;">Total del curso: <?= Formato::moneda((float) $v['ingresos']) ?></p>
+            </details>
+          </div>
+          <?php endforeach; ?>
         </div>
 
         <div class="dash-tab-panel" id="dashtab-mensajes">
-          <div class="panel messenger">
-            <div class="panel__head"><h3>Mensajes</h3></div>
-            <div class="messenger__layout">
-              <div class="messenger__list">
-                <div class="messenger__item is-active">
-                  <div class="dash-nav__avatar" style="width:36px; height:36px;"></div>
-                  <div class="messenger__item-body">
-                    <strong>Ana Torres</strong>
-                    <span>Tengo una duda sobre el middleware</span>
-                  </div>
-                  <span class="messenger__time">10:24</span>
-                </div>
-                <div class="messenger__item">
-                  <div class="dash-nav__avatar" style="width:36px; height:36px; background:linear-gradient(135deg, var(--sky), var(--cyan));"></div>
-                  <div class="messenger__item-body">
-                    <strong>Jorge Pérez</strong>
-                    <span>¿El nivel 5 ya tiene video?</span>
-                  </div>
-                  <span class="messenger__time">Ayer</span>
-                </div>
-              </div>
-              <div class="messenger__thread">
-                <div class="messenger__thread-head">
-                  <div class="dash-nav__avatar" style="width:32px; height:32px;"></div>
-                  <div><strong>Ana Torres</strong><span class="field-hint">Estudiante · MVC y arquitectura en tres capas</span></div>
-                </div>
-                <div class="messenger__bubble messenger__bubble--in">¿Ya viste el material del nivel 4? Cualquier duda me dices.</div>
-                <div class="messenger__bubble messenger__bubble--out">Claro Ana, el video de CORS explica justo eso.</div>
-                <div class="messenger__bubble messenger__bubble--in">Tengo una duda sobre el middleware.</div>
-                <div class="messenger__thread-input">
-                  <input type="text" placeholder="Escribe un mensaje…">
-                  <button class="btn btn--primary btn--sm">Enviar</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <?php require dirname(__DIR__) . '/_mensajeria.php'; ?>
         </div>
 
         <div class="dash-tab-panel" id="dashtab-perfil">
-          <div class="panel" style="max-width:520px;">
-            <div class="panel__head"><h3>Mi perfil</h3></div>
-            <div class="avatar-upload" style="margin-bottom:18px;">
-              <div class="avatar-upload__preview" style="background:linear-gradient(135deg, var(--teal), var(--primary));">🖼️</div>
-              <div class="avatar-upload__actions">
-                <button type="button" class="btn btn--outline btn--sm">Cambiar foto</button>
-                <span class="field-hint">Imagen tipo avatar (JPG o PNG).</span>
-              </div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:14px;">
-              <div class="field">
-                <label>Nombre completo</label>
-                <input type="text" value="Fausto Islas">
-              </div>
-              <div class="field">
-                <label>Correo electrónico</label>
-                <input type="email" value="fausto.islas@correo.com">
-              </div>
-              <div style="display:flex; gap:14px;">
-                <div class="field" style="flex:1;">
-                  <label>Género</label>
-                  <select><option>Masculino</option><option>Femenino</option><option>Otro</option><option>Prefiero no decir</option></select>
-                </div>
-                <div class="field" style="flex:1;">
-                  <label>Fecha de nacimiento</label>
-                  <input type="date" value="1994-02-02">
-                </div>
-              </div>
-              <div class="field">
-                <label>Nueva contraseña</label>
-                <input type="password" placeholder="Dejar en blanco para no cambiar">
-              </div>
-              <button class="btn btn--primary" style="align-self:flex-start;">Guardar cambios</button>
-            </div>
-          </div>
+          <?php require dirname(__DIR__) . '/_perfil_tab.php'; ?>
         </div>
 
       </div>
@@ -196,4 +178,5 @@ require dirname(__DIR__) . '/_encabezado.php';
   </div>
 </section>
 
+<?php require dirname(__DIR__) . '/_abrir_tab.php'; ?>
 <?php require dirname(__DIR__) . '/_pie.php'; ?>

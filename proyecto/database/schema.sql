@@ -138,13 +138,15 @@ CREATE TABLE certificados (
 
 INSERT INTO formas_pago (nombre) VALUES ('Tarjeta (Stripe)'), ('PayPal');
 
+-- Pagos con Stripe (PaymentIntent). La referencia única del cobro es stripe_payment_intent.
 CREATE TABLE IF NOT EXISTS pagos (
   id                     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   inscripcion_id         INT UNSIGNED NOT NULL,
-  stripe_session_id      VARCHAR(255) NOT NULL UNIQUE,
+  stripe_session_id      VARCHAR(255) NULL,            -- ya no se usa (era del Checkout hospedado)
   stripe_payment_intent  VARCHAR(255) NULL,
   monto                  DECIMAL(10,2) NOT NULL,
   moneda                 CHAR(3) NOT NULL DEFAULT 'mxn',
   fecha_pago             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_pagos_intent (stripe_payment_intent),
   FOREIGN KEY (inscripcion_id) REFERENCES inscripciones(id)
 ) ENGINE=InnoDB;
