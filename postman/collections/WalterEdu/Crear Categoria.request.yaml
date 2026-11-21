@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/api/categorias"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"nombre\": \"Prueba Postman\"\r
+
+    }"
+order: 3000

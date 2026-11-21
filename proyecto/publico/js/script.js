@@ -11,9 +11,11 @@
 // tienen que repetirse en el servidor antes de guardar nada en la base de datos.
 
 document.addEventListener('DOMContentLoaded', () => {
+  initConfirmarSalida();
   initTabsPanelLateral();
   initListaMensajes();
   initTabsCurso();
+  initAprendizaje();
   initChipsCategoria();
   initMostrarContrasena();
   initFormLogin();
@@ -27,6 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
 /* =========================================================================
    1. Interacciones de la interfaz
    ========================================================================= */
+
+function initConfirmarSalida() {
+  const dialogo = document.getElementById('confirmar-salida');
+  if (typeof dialogo?.showModal !== 'function') return;
+
+  document.querySelectorAll('a[href="index.php?ruta=salir"]').forEach(enlace => {
+    enlace.addEventListener('click', evento => {
+      if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+      evento.preventDefault();
+      dialogo.showModal();
+    });
+  });
+  document.getElementById('cancelar-salida').addEventListener('click', () => dialogo.close());
+}
 
 // Tabs del panel lateral en Estudiante / Instructor / Administrador
 function initTabsPanelLateral() {
@@ -53,7 +69,7 @@ function initListaMensajes() {
   });
 }
 
-// Tabs de la ventana de detalle de curso (Contenido / Descripción / Comentarios)
+// Tabs de descripción y reseñas del curso
 function initTabsCurso() {
   const courseTabs = document.querySelectorAll('#courseTabs button');
   courseTabs.forEach(tab => {
@@ -63,6 +79,64 @@ function initTabsCurso() {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('is-active'));
       document.getElementById('tab-' + tab.dataset.tab).classList.add('is-active');
     });
+  });
+}
+
+function initAprendizaje() {
+  const video = document.getElementById('curso-video');
+  if (video?.dataset.avance) {
+    const aviso = document.getElementById('curso-avance-aviso');
+    let enviado = false;
+    video.addEventListener('ended', async () => {
+      if (enviado) return;
+      enviado = true;
+      try {
+        const { respuesta, cuerpo } = await pedirApi(video.dataset.avance, {
+          method: 'PUT', headers: CABECERAS_JSON, body: JSON.stringify({ completado: true })
+        });
+        if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudo guardar el avance.'));
+        if (cuerpo.datos.completado) {
+          window.location.assign(`index.php?ruta=curso&id=${cuerpo.datos.curso_id}&tab=comentarios`);
+          return;
+        }
+        const fila = document.getElementById('curso-nivel-' + cuerpo.datos.nivel_id);
+        const marca = fila?.querySelector('.level-row__check');
+        if (marca) {
+          fila.classList.add('is-done');
+          marca.textContent = '✔';
+          marca.setAttribute('aria-label', 'Completado');
+        }
+        mostrarAviso(aviso, 'ok', 'Nivel completado. Avance del curso: ' + cuerpo.datos.avance + '%.');
+      } catch (error) {
+        enviado = false;
+        mostrarAviso(aviso, 'error', mensajeDeError(error));
+      }
+    });
+    video.addEventListener('error', () => mostrarAviso(aviso, 'error', 'No se pudo cargar este video.'));
+  }
+
+  const form = document.getElementById('form-resena');
+  if (!form) return;
+  const boton = form.querySelector('button');
+  const aviso = form.querySelector('.form-alert');
+  form.addEventListener('submit', async evento => {
+    evento.preventDefault();
+    boton.disabled = true;
+    try {
+      const datos = new FormData(form);
+      const { respuesta, cuerpo } = await pedirApi(form.dataset.endpoint, {
+        method: 'POST', headers: CABECERAS_JSON,
+        body: JSON.stringify({ texto: datos.get('texto'), calificacion: Number(datos.get('calificacion')) })
+      });
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudo guardar la reseña.'));
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'comentarios');
+      url.searchParams.set('resena', 'publicada');
+      window.location.assign(url);
+    } catch (error) {
+      mostrarAviso(aviso, 'error', mensajeDeError(error));
+      boton.disabled = false;
+    }
   });
 }
 
@@ -630,14 +704,15 @@ function cargarCursos(grid, filtros) {
   mostrarEstadoCatalogo(grid, 'Cargando cursos…');
 
   const parametros = new URLSearchParams({ orden: grid.dataset.orden, por_pagina: '6' });
-  if (filtros.titulo) parametros.set('titulo', filtros.titulo);
-  if (filtros.categoria) parametros.set('categoria', filtros.categoria);
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    if (valor) parametros.set(clave, valor);
+  });
 
   return pedirApi('api/cursos?' + parametros.toString(), { headers: { Accept: 'application/json' } })
     .then(({ respuesta, cuerpo }) => {
       if (grid.dataset.solicitud !== solicitud) return;
       if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudo cargar el catálogo.'));
-      pintarCursos(grid, cuerpo.datos, Boolean(filtros.titulo || filtros.categoria));
+      pintarCursos(grid, cuerpo.datos, Object.values(filtros).some(Boolean));
     })
     .catch(error => {
       if (grid.dataset.solicitud !== solicitud) return;
@@ -722,7 +797,8 @@ const CAMPOS_CURSO = {
   nivel: 'cc-nivel',
   precio: 'cc-precio',
   categorias: 'cc-categorias',
-  imagen: 'cc-imagen'
+  imagen: 'cc-imagen',
+  portada: 'cc-portada'
 };
 
 function validarTituloCurso(el) {
@@ -751,12 +827,20 @@ function validarPrecioCurso(el) {
   const valor = el.value.trim();
   if (!valor) return 'Escribe el precio (0 si el curso es gratis).';
   if (!/^\d+(\.\d{1,2})?$/.test(valor)) return 'Escribe un número positivo con máximo dos decimales (ejemplo: 499.00).';
-  if (Number(valor) > 99999999.99) return 'El precio es demasiado alto.';
+  if (Number(valor) > 999999.99 || (Number(valor) > 0 && Number(valor) < 10)) return 'Usa 0 o un precio entre $10.00 y $999,999.99 MXN.';
   return '';
 }
 
 function validarImagenCurso(el) {
   return el.value.trim().length > 255 ? 'La ruta es demasiado larga (máximo 255 caracteres).' : '';
+}
+
+function validarPortadaCurso(el) {
+  const archivo = el.files[0];
+  if (!archivo) return '';
+  if (archivo.size > 5 * 1024 * 1024) return 'El banner puede pesar hasta 5 MB.';
+  const tipos = ['image/jpeg', 'image/png', 'image/webp'];
+  return archivo.type && !tipos.includes(archivo.type) ? 'Selecciona una imagen JPG, PNG o WebP.' : '';
 }
 
 function initCrearCurso() {
@@ -767,11 +851,8 @@ function initCrearCurso() {
   const botones = form.querySelectorAll('button[type="submit"]');
   const actualizarVista = initVistaPrevia(form);
 
-  botones.forEach(boton => boton.addEventListener('click', () => {
-    form.dataset.publicar = boton.dataset.publicar;
-  }));
-
-  cargarCategoriasCurso(form.querySelector('#cc-categorias'), actualizarVista);
+  const seleccionadas = new Set(form.dataset.categorias.split(',').filter(Boolean));
+  cargarCategoriasCurso(form.querySelector('#cc-categorias'), actualizarVista, seleccionadas);
 
   configurarValidacion(form, {
     'cc-titulo': validarTituloCurso,
@@ -779,11 +860,19 @@ function initCrearCurso() {
     'cc-categorias': validarCategoriasCurso,
     'cc-nivel': validarNivelCurso,
     'cc-precio': validarPrecioCurso,
-    'cc-imagen': validarImagenCurso
+    'cc-imagen': validarImagenCurso,
+    'cc-portada': validarPortadaCurso
   }, () => enviarCurso(form, caja, botones, actualizarVista));
 }
 
-function cargarCategoriasCurso(grupo, alTerminar) {
+function cargarCategoriasCurso(desplegable, alTerminar, seleccionadas) {
+  const grupo = desplegable.querySelector('#cc-categorias-opciones');
+  const buscar = desplegable.querySelector('#cc-categorias-busqueda');
+  const resumen = desplegable.querySelector('summary');
+  const actualizarResumen = () => {
+    const nombres = Array.from(grupo.querySelectorAll('input:checked'), campo => campo.dataset.nombre);
+    resumen.textContent = nombres.length ? nombres.join(', ') : 'Selecciona categorías';
+  };
   grupo.replaceChildren(crearNodo('span', 'field-hint', 'Cargando categorías…'));
 
   return pedirApi('api/categorias', { headers: { Accept: 'application/json' } })
@@ -800,15 +889,24 @@ function cargarCategoriasCurso(grupo, alTerminar) {
         casilla.type = 'checkbox';
         casilla.value = String(categoria.id_categoria);
         casilla.dataset.nombre = categoria.nombre;
+        casilla.checked = seleccionadas.has(casilla.value);
         etiqueta.append(casilla, ' ' + categoria.nombre);
         return etiqueta;
       }));
+      grupo.onchange = actualizarResumen;
+      buscar.oninput = () => {
+        const consulta = buscar.value.trim().toLocaleLowerCase('es');
+        grupo.querySelectorAll('label').forEach(opcion => {
+          opcion.hidden = !opcion.textContent.toLocaleLowerCase('es').includes(consulta);
+        });
+      };
+      actualizarResumen();
       alTerminar();
     })
     .catch(error => {
       grupo.replaceChildren(
         crearNodo('span', 'field-hint', mensajeDeError(error) + ' '),
-        crearBotonReintentar(() => cargarCategoriasCurso(grupo, alTerminar))
+        crearBotonReintentar(() => cargarCategoriasCurso(desplegable, alTerminar, seleccionadas))
       );
     });
 }
@@ -818,12 +916,25 @@ function initVistaPrevia(form) {
   if (!contenedor) return () => {};
 
   const instructor = form.dataset.instructor || '';
+  const enlace = form.querySelector('#cc-imagen');
+  const portada = form.querySelector('#cc-portada');
+  const quitar = document.getElementById('cc-quitar-portada');
+  let archivoPrevio;
+  let urlPortada;
 
   const actualizar = () => {
     const textoPrecio = form.querySelector('#cc-precio').value.trim();
     const precio = textoPrecio !== '' && !Number.isNaN(Number(textoPrecio)) ? Number(textoPrecio) : null;
     const nivel = Number(form.querySelector('#cc-nivel').value) || null;
     const categorias = Array.from(form.querySelectorAll('#cc-categorias input:checked'), c => c.dataset.nombre);
+    const archivo = validarPortadaCurso(portada) ? null : portada.files[0];
+    if (archivo !== archivoPrevio) {
+      if (urlPortada) URL.revokeObjectURL(urlPortada);
+      urlPortada = archivo ? URL.createObjectURL(archivo) : null;
+      archivoPrevio = archivo;
+    }
+    const imagen = urlPortada || enlace.value.trim() || null;
+    quitar.hidden = !imagen && !portada.files.length;
 
     contenedor.replaceChildren(crearTarjetaCurso({
       titulo: form.querySelector('#cc-titulo').value.trim() || 'Título del curso',
@@ -831,45 +942,67 @@ function initVistaPrevia(form) {
       precio,
       nivel,
       categorias,
-      imagen: null,
+      imagen,
       promedio_calificacion: null
     }));
   };
 
   form.addEventListener('input', actualizar);
   form.addEventListener('change', actualizar);
+  quitar.addEventListener('click', () => {
+    portada.value = '';
+    enlace.value = '';
+    portada.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   actualizar();
   return actualizar;
 }
 
 function enviarCurso(form, caja, botones, actualizarVista) {
-  const publicar = form.dataset.publicar === '1';
+  const id = Number(form.dataset.curso);
+  const imagen = form.querySelector('#cc-imagen');
+  const portada = form.querySelector('#cc-portada');
+  const archivo = portada.files[0];
   const cuerpo = {
     titulo: form.querySelector('#cc-titulo').value.trim(),
     descripcion: form.querySelector('#cc-descripcion').value.trim(),
     nivel: Number(form.querySelector('#cc-nivel').value),
     precio: Number(form.querySelector('#cc-precio').value.trim()),
     categorias: Array.from(form.querySelectorAll('#cc-categorias input:checked'), c => Number(c.value)),
-    activo: publicar
+    imagen: archivo ? null : imagen.value.trim() || null
   };
-  const imagen = form.querySelector('#cc-imagen').value.trim();
-  if (imagen) cuerpo.imagen = imagen;
+  if (!id) cuerpo.activo = false;
+
+  const datos = archivo ? new FormData() : JSON.stringify(cuerpo);
+  if (archivo) {
+    datos.set('datos', JSON.stringify(cuerpo));
+    datos.set('csrf', form.elements.csrf.value);
+    datos.set('portada', archivo);
+  }
 
   botones.forEach(boton => { boton.disabled = true; });
   mostrarAviso(caja, 'ok', 'Guardando el curso…');
 
-  return pedirApi('api/cursos', { method: 'POST', headers: CABECERAS_JSON, body: JSON.stringify(cuerpo) })
+  return pedirApi(id ? 'api/cursos/' + id : 'api/cursos', {
+    method: id && !archivo ? 'PATCH' : 'POST',
+    headers: archivo ? { Accept: 'application/json' } : CABECERAS_JSON,
+    body: datos
+  })
     .then(({ respuesta, cuerpo: resultado }) => {
-      if (respuesta.status === 201) {
-        form.reset();
-        form.querySelectorAll('.field').forEach(campo => campo.classList.remove('has-error', 'is-valid'));
-        actualizarVista();
-        mostrarAviso(caja, 'ok', publicar ? 'Curso publicado correctamente.' : 'Borrador guardado correctamente.');
+      if (respuesta.ok && resultado.exito) {
+        if (id) {
+          portada.value = '';
+          imagen.value = resultado.datos.imagen || '';
+          actualizarVista();
+          mostrarAviso(caja, 'ok', 'Curso actualizado correctamente.');
+        } else {
+          window.location.assign('index.php?ruta=editar-niveles&curso=' + resultado.datos.id_curso + '&creado=1');
+        }
         return;
       }
       if (respuesta.status === 400) {
         (resultado.errores || []).forEach(error => {
-          const campo = form.querySelector('#' + (CAMPOS_CURSO[error.campo] || ''));
+          const campo = document.getElementById(CAMPOS_CURSO[error.campo]);
           if (campo) mostrarError(campo, error.descripcion);
         });
         mostrarAviso(caja, 'error', textoDeErrorApi(resultado, 'Revisa los campos marcados.'));
@@ -903,24 +1036,64 @@ function initAdminCategorias() {
   const form = document.getElementById('form-categoria');
   if (!cuerpoTabla || !form) return;
 
-  cargarTablaCategorias(cuerpoTabla);
+  const caja = form.querySelector('.form-alert');
+  const titulo = document.getElementById('categoria-form-titulo');
+  const boton = form.querySelector('button[type="submit"]');
+  const cancelar = document.getElementById('categoria-cancelar');
+  const nombre = form.querySelector('#cat-nombre');
+  const descripcion = form.querySelector('#cat-descripcion');
+
+  const editar = categoria => {
+    form.dataset.categoria = categoria ? categoria.id_categoria : '';
+    titulo.textContent = categoria ? 'Editar categoría' : 'Nueva categoría';
+    boton.textContent = categoria ? 'Guardar cambios' : 'Agregar categoría';
+    cancelar.hidden = !categoria;
+    form.reset();
+    form.querySelectorAll('.field').forEach(campo => campo.classList.remove('has-error', 'is-valid'));
+    if (categoria) {
+      nombre.value = categoria.nombre;
+      descripcion.value = categoria.descripcion || '';
+      nombre.focus();
+    }
+    ocultarAviso(caja);
+  };
+  const recargar = () => cargarTablaCategorias(cuerpoTabla, editar, eliminar);
+  const eliminar = async categoria => {
+    if (!window.confirm('¿Eliminar la categoría «' + categoria.nombre + '»?')) return;
+    try {
+      const { respuesta, cuerpo } = await pedirApi('api/categorias/' + categoria.id_categoria, {
+        method: 'DELETE', headers: { Accept: 'application/json' }
+      });
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(textoDeErrorApi(cuerpo, 'No se pudo eliminar la categoría.'));
+      if (Number(form.dataset.categoria) === categoria.id_categoria) editar(null);
+      mostrarAviso(caja, 'ok', cuerpo.mensaje);
+      recargar();
+    } catch (error) {
+      mostrarAviso(caja, 'error', mensajeDeError(error));
+    }
+  };
+  cancelar.addEventListener('click', () => editar(null));
+  recargar();
 
   configurarValidacion(form, {
     'cat-nombre': validarNombreCategoria,
     'cat-descripcion': validarDescripcionCategoria
-  }, () => enviarCategoria(form, form.querySelector('.form-alert'), cuerpoTabla));
+  }, () => enviarCategoria(form, caja, () => {
+    editar(null);
+    recargar();
+  }));
 }
 
 function filaMensaje(texto, reintentar) {
   const celda = crearNodo('td', '', texto + ' ');
-  celda.colSpan = 4;
+  celda.colSpan = 5;
   if (reintentar) celda.appendChild(crearBotonReintentar(reintentar));
   const fila = document.createElement('tr');
   fila.appendChild(celda);
   return fila;
 }
 
-function cargarTablaCategorias(cuerpoTabla) {
+function cargarTablaCategorias(cuerpoTabla, editar, eliminar) {
   cuerpoTabla.replaceChildren(filaMensaje('Cargando categorías…'));
 
   return pedirApi('api/categorias', { headers: { Accept: 'application/json' } })
@@ -935,30 +1108,42 @@ function cargarTablaCategorias(cuerpoTabla) {
         const fila = document.createElement('tr');
         [categoria.nombre, String(categoria.total_cursos), categoria.creada_por, formatoFecha(categoria.fecha_creacion)]
           .forEach(texto => fila.appendChild(crearNodo('td', '', texto)));
+        const acciones = document.createElement('td');
+        const botones = crearNodo('div', 'curso-acciones');
+        const botonEditar = crearNodo('button', 'btn btn--outline btn--sm', 'Editar');
+        const botonEliminar = crearNodo('button', 'btn btn--danger btn--sm', 'Eliminar');
+        botonEditar.type = botonEliminar.type = 'button';
+        botonEditar.addEventListener('click', () => editar(categoria));
+        botonEliminar.addEventListener('click', () => eliminar(categoria));
+        botones.append(botonEditar, botonEliminar);
+        acciones.appendChild(botones);
+        fila.appendChild(acciones);
         return fila;
       }));
     })
     .catch(error => {
-      cuerpoTabla.replaceChildren(filaMensaje(mensajeDeError(error), () => cargarTablaCategorias(cuerpoTabla)));
+      cuerpoTabla.replaceChildren(filaMensaje(mensajeDeError(error), () => cargarTablaCategorias(cuerpoTabla, editar, eliminar)));
     });
 }
 
-function enviarCategoria(form, caja, cuerpoTabla) {
+function enviarCategoria(form, caja, guardada) {
   const boton = form.querySelector('button[type="submit"]');
-  const cuerpo = { nombre: form.querySelector('#cat-nombre').value.trim() };
-  const descripcion = form.querySelector('#cat-descripcion').value.trim();
-  if (descripcion) cuerpo.descripcion = descripcion;
+  const id = Number(form.dataset.categoria);
+  const cuerpo = {
+    nombre: form.querySelector('#cat-nombre').value.trim(),
+    descripcion: form.querySelector('#cat-descripcion').value.trim() || null
+  };
 
   boton.disabled = true;
   mostrarAviso(caja, 'ok', 'Guardando la categoría…');
 
-  return pedirApi('api/categorias', { method: 'POST', headers: CABECERAS_JSON, body: JSON.stringify(cuerpo) })
+  return pedirApi(id ? 'api/categorias/' + id : 'api/categorias', {
+    method: id ? 'PUT' : 'POST', headers: CABECERAS_JSON, body: JSON.stringify(cuerpo)
+  })
     .then(({ respuesta, cuerpo: resultado }) => {
-      if (respuesta.status === 201) {
-        form.reset();
-        form.querySelectorAll('.field').forEach(campo => campo.classList.remove('has-error', 'is-valid'));
-        mostrarAviso(caja, 'ok', 'Categoría creada correctamente.');
-        cargarTablaCategorias(cuerpoTabla);
+      if (respuesta.ok && resultado.exito) {
+        guardada();
+        mostrarAviso(caja, 'ok', resultado.mensaje);
         return;
       }
       if (respuesta.status === 400) {
@@ -969,7 +1154,7 @@ function enviarCategoria(form, caja, cuerpoTabla) {
         mostrarAviso(caja, 'error', textoDeErrorApi(resultado, 'Revisa los campos marcados.'));
         return;
       }
-      mostrarAviso(caja, 'error', resultado.mensaje || 'No se pudo crear la categoría.');
+      mostrarAviso(caja, 'error', resultado.mensaje || 'No se pudo guardar la categoría.');
     })
     .catch(error => mostrarAviso(caja, 'error', mensajeDeError(error)))
     .finally(() => { boton.disabled = false; });

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{base_url}}/api/pedidos/{{pedido_id}}/cancelar"
+method: PUT
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+order: 8000

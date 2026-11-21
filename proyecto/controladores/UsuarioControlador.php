@@ -217,8 +217,21 @@ class UsuarioControlador extends Controlador
 
     public function salir(): void
     {
-        $_SESSION = [];
-        session_destroy();
-        $this->redirigir('inicio');
+        if (empty($_SESSION['usuario'])) $this->redirigir('inicio');
+
+        $csrf = $_SESSION['csrf'] ??= bin2hex(random_bytes(32));
+        $error = false;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $token = $_POST['csrf'] ?? null;
+            if (is_string($token) && hash_equals($csrf, $token)) {
+                $_SESSION = [];
+                session_destroy();
+                $this->redirigir('inicio');
+            }
+            http_response_code(403);
+            $error = true;
+        }
+
+        $this->vista('publico/confirmar_salida', ['csrf' => $csrf, 'error' => $error]);
     }
 }

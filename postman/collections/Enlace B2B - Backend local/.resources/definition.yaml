@@ -1,0 +1,18 @@
+$kind: collection
+description: "Solicitudes preparadas segun las rutas actuales del proyecto. Completa variables y usa datos de prueba. MODO_REVISION usa rol administrador: las acciones que exigen comprador o distribuidor requieren desactivarlo e iniciar sesion con el rol correspondiente."
+variables:
+  base_url: http://localhost:3000
+  token_admin: ""
+  token_comprador: ""
+  token_distribuidor: ""
+  correo_prueba: ""
+  contrasena_prueba: ""
+  empresa_id: ""
+  usuario_id: ""
+  comprador_id: ""
+  distribuidor_id: ""
+  producto_id: ""
+  inventario_id: ""
+  pedido_id: ""
+  transaccion_id: ""
+  configuracion_id: ""

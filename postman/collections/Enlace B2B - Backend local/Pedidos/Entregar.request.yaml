@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{base_url}}/api/pedidos/{{pedido_id}}/entregar"
+method: PUT
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_distribuidor}}"
+order: 7000

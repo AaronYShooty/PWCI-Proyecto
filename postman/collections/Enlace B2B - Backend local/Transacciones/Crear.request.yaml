@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/transacciones"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "pedidoId": "{{pedido_id}}",
+      "tipo": "venta",
+      "monto": 100,
+      "estado": "pendiente"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 3000

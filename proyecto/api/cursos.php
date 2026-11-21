@@ -5,4 +5,4 @@ $middlewares = ['cors'];
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') $middlewares[] = 'acceso:instructor,administrador';
 Middleware::ejecutar($middlewares, true);
 
-(new CursoApiControlador(new Conexion()))->atender($_SERVER['REQUEST_METHOD'], $_GET['id'] ?? null);
+(new CursoApiControlador(new Conexion(), new PortadaCurso()))->atender($_SERVER['REQUEST_METHOD'], $_GET['id'] ?? null);

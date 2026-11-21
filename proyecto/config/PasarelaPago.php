@@ -3,9 +3,9 @@
 // así se puede sustituir Stripe por otra implementación sin tocar el controlador.
 interface PasarelaPago
 {
-    /** Crea una sesión de cobro y devuelve ['id' => ..., 'url' => ...]. */
-    public function crearSesion(array $curso, int $usuarioId, string $urlExito, string $urlCancelado): array;
+    /** Devuelve los datos del intento y permite repetir la creación con la misma clave. */
+    public function crearIntento(array $curso, int $usuarioId, string $clave): array;
 
-    /** Consulta una sesión ya creada: ['id','pagado','monto','moneda','intento','curso_id','usuario_id']. */
-    public function obtenerSesion(string $id): array;
+    /** Devuelve el estado, método, importe, moneda y referencias del cobro. */
+    public function obtenerIntento(string $id): array;
 }

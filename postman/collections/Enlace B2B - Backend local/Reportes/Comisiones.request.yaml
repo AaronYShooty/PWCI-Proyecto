@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/reportes/comisiones"
+method: GET
+queryParams:
+  - key: desde
+    value: ""
+    disabled: true
+  - key: hasta
+    value: ""
+    disabled: true
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 4000

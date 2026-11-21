@@ -1,0 +1,16 @@
+$kind: http-request
+description: Copia el token recibido en la variable correspondiente al rol. El registro requiere empresa verificada para iniciar sesion.
+url: "{{base_url}}/api/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "correo": "{{correo_prueba}}",
+      "contrasena": "{{contrasena_prueba}}"
+    }
+auth:
+  type: noauth
+order: 3000

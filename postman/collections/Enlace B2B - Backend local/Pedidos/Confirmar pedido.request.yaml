@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/pedidos/confirmar"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "compradorId": "{{comprador_id}}",
+      "distribuidorId": "{{distribuidor_id}}",
+      "productos": [
+        {
+          "productoId": "{{producto_id}}",
+          "cantidad": 2
+        }
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+order: 3000

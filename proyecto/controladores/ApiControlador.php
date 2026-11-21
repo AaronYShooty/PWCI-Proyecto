@@ -17,17 +17,23 @@ abstract class ApiControlador extends Controlador
 
     protected function leerJson(): ?array
     {
-        if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+        $tipo = strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0]));
+        if ($tipo !== 'application/json') {
             $this->fallo('El Content-Type debe ser application/json.', 415);
             return null;
         }
 
-        $cuerpo = json_decode(file_get_contents('php://input'), true);
-        if (!is_array($cuerpo) || ($cuerpo && array_is_list($cuerpo))) {
+        return $this->leerObjetoJson((string) file_get_contents('php://input'));
+    }
+
+    protected function leerObjetoJson(string $contenido): ?array
+    {
+        $cuerpo = json_decode($contenido);
+        if (!$cuerpo instanceof stdClass) {
             $this->fallo('El cuerpo debe ser un objeto JSON válido.', 400);
             return null;
         }
-        return $cuerpo;
+        return (array) $cuerpo;
     }
 
     protected function textoValido(mixed $valor, int $max): bool

@@ -1,3 +1,5 @@
 .env
 *.log
 /publico/uploads/
+/almacen/*
+!/almacen/.htaccess

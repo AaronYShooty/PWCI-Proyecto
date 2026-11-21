@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/productos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "distribuidorId": "{{distribuidor_id}}",
+      "sku": "SKU-PRUEBA",
+      "nombre": "Producto de prueba",
+      "descripcion": "Descripcion de prueba",
+      "categoria": "Herramientas",
+      "precio": 100,
+      "unidadMedida": "pieza",
+      "activo": true
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 3000

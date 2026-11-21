@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/pedidos/{{pedido_id}}/rechazar"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "motivoRechazo": "Sin existencia"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_distribuidor}}"
+order: 9000

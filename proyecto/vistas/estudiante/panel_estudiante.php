@@ -1,6 +1,9 @@
 <?php
+/** @var array|null $aviso @var string $csrf @var array $resumen @var array $continuar @var array $kardex
+ *  @var array $filtros @var array $categorias @var array $perfil @var array $contactos @var array|null $conActual @var array $hilo */
 $titulo = 'Panel del estudiante | Walter';
 $activa = 'estudiante';
+$panelRuta = 'estudiante';
 require dirname(__DIR__) . '/_encabezado.php';
 ?>
 
@@ -9,7 +12,7 @@ require dirname(__DIR__) . '/_encabezado.php';
     <div class="dash">
       <aside class="dash-nav">
         <div class="dash-nav__user">
-          <div class="dash-nav__avatar"></div>
+          <div class="dash-nav__avatar" style="<?= Formato::avatar($perfil['foto']) ?>"></div>
           <div>
             <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>
             <span>Estudiante</span>
@@ -23,39 +26,47 @@ require dirname(__DIR__) . '/_encabezado.php';
       </aside>
 
       <div class="dash-main">
+        <?php if (!empty($aviso)): ?>
+        <div class="form-alert is-visible form-alert--<?= $aviso['tipo'] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($aviso['mensaje']) ?></div>
+        <?php endif; ?>
 
         <div class="dash-tab-panel is-active" id="dashtab-mis-cursos">
           <div class="stat-row">
-            <div class="stat-card"><span>Cursos inscritos</span><strong>6</strong></div>
-            <div class="stat-card"><span>Cursos terminados</span><strong>3</strong></div>
-            <div class="stat-card"><span>En progreso</span><strong>3</strong></div>
-            <div class="stat-card"><span>Diplomas obtenidos</span><strong>3</strong></div>
+            <div class="stat-card"><span>Cursos inscritos</span><strong><?= $resumen['inscritos'] ?></strong></div>
+            <div class="stat-card"><span>Cursos terminados</span><strong><?= $resumen['terminados'] ?></strong></div>
+            <div class="stat-card"><span>En progreso</span><strong><?= $resumen['en_progreso'] ?></strong></div>
+            <div class="stat-card"><span>Diplomas obtenidos</span><strong><?= $resumen['terminados'] ?></strong></div>
           </div>
 
           <div class="panel">
-            <div class="panel__head">
-              <h3>Continúa donde lo dejaste</h3>
-            </div>
+            <div class="panel__head"><h3>Continúa donde lo dejaste</h3></div>
+            <?php if (!$continuar): ?>
+              <p class="field-hint">
+                <?= $resumen['inscritos'] === 0
+                    ? 'Aún no te has inscrito a ningún curso.'
+                    : 'No tienes cursos en progreso.' ?>
+                <a href="index.php?ruta=inicio">Explora el catálogo</a>.
+              </p>
+            <?php else: ?>
             <div style="display:flex; flex-direction:column; gap:12px;">
+              <?php foreach ($continuar as $k): ?>
               <div class="course-row-card">
                 <div class="course-row-card__thumb"></div>
                 <div class="course-row-card__body">
-                  <h4>MVC y arquitectura en tres capas con PHP</h4>
-                  <span style="font-size:0.8rem; color:var(--ink-soft);">Nivel 3 de 6 · Última actividad: hace 2 días</span>
-                  <div class="progress-bar"><span style="width:50%;"></span></div>
+                  <h4><?= htmlspecialchars($k['titulo']) ?></h4>
+                  <span style="font-size:0.8rem; color:var(--ink-soft);">
+                    <?php if ((int) $k['total_niveles'] > 0): ?>
+                      Nivel <?= min((int) $k['niveles_vistos'] + 1, (int) $k['total_niveles']) ?> de <?= (int) $k['total_niveles'] ?> ·
+                    <?php endif; ?>
+                    Última actividad: <?= Formato::fecha($k['ultima_fecha_acceso'] ?? $k['fecha_inscripcion']) ?>
+                  </span>
+                  <div class="progress-bar"><span style="width:<?= (int) $k['avance'] ?>%;"></span></div>
                 </div>
-                <a href="index.php?ruta=curso" class="btn btn--ghost btn--sm">Continuar</a>
+                <a href="index.php?ruta=curso&amp;id=<?= (int) $k['curso_id'] ?>" class="btn btn--ghost btn--sm">Continuar</a>
               </div>
-              <div class="course-row-card">
-                <div class="course-row-card__thumb"></div>
-                <div class="course-row-card__body">
-                  <h4>Diseño de interfaces amigables para principiantes</h4>
-                  <span style="font-size:0.8rem; color:var(--ink-soft);">Nivel 4 de 5 · Última actividad: hoy</span>
-                  <div class="progress-bar"><span style="width:80%;"></span></div>
-                </div>
-                <a href="index.php?ruta=curso" class="btn btn--ghost btn--sm">Continuar</a>
-              </div>
+              <?php endforeach; ?>
             </div>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -63,129 +74,69 @@ require dirname(__DIR__) . '/_encabezado.php';
           <div class="panel">
             <div class="panel__head">
               <h3>Kardex</h3>
-              <div class="filter-row">
-                <select><option>Categoría: todas</option></select>
-                <select><option>Estado: todos</option></select>
-                <input type="date" style="width:150px;">
-              </div>
+              <form class="filter-row" method="get" action="index.php">
+                <input type="hidden" name="ruta" value="estudiante">
+                <input type="hidden" name="tab" value="kardex">
+                <select name="categoria" aria-label="Categoría">
+                  <option value="">Categoría: todas</option>
+                  <?php foreach ($categorias as $c): ?>
+                  <option value="<?= $c['id_categoria'] ?>"<?= (int) ($filtros['categoria'] ?? 0) === $c['id_categoria'] ? ' selected' : '' ?>><?= htmlspecialchars($c['nombre']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <select name="estado" aria-label="Estado">
+                  <option value="">Estado: todos</option>
+                  <option value="terminado"<?= ($filtros['estado'] ?? '') === 'terminado' ? ' selected' : '' ?>>Solo terminados</option>
+                </select>
+                <select name="cursos" aria-label="Cursos activos">
+                  <option value="">Activos e inactivos</option>
+                  <option value="activos"<?= ($filtros['cursos'] ?? '') === 'activos' ? ' selected' : '' ?>>Solo activos</option>
+                </select>
+                <input type="date" name="desde" value="<?= htmlspecialchars($filtros['desde'] ?? '') ?>" style="width:150px;" title="Inscrito desde" aria-label="Inscrito desde">
+                <input type="date" name="hasta" value="<?= htmlspecialchars($filtros['hasta'] ?? '') ?>" style="width:150px;" title="Inscrito hasta" aria-label="Inscrito hasta">
+                <button type="submit" class="btn btn--primary btn--sm">Filtrar</button>
+                <a href="index.php?ruta=estudiante&amp;tab=kardex" class="btn btn--ghost btn--sm">Limpiar</a>
+              </form>
             </div>
             <table>
               <thead>
-                <tr><th>Curso</th><th>Categoría</th><th>Inscripción</th><th>Último ingreso</th><th>Avance</th><th>Estado</th></tr>
+                <tr><th>Curso</th><th>Categoría</th><th>Inscripción</th><th>Último ingreso</th><th>Terminación</th><th>Avance</th><th>Estado</th><th></th></tr>
               </thead>
               <tbody>
+                <?php if (!$kardex): ?>
+                <tr><td colspan="8" class="field-hint">No hay cursos que coincidan con estos filtros.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($kardex as $k): ?>
                 <tr>
-                  <td>Fundamentos de PHP orientado a objetos</td>
-                  <td>IT &amp; Software</td>
-                  <td>03 feb 2026</td>
-                  <td>28 ago 2026</td>
-                  <td><div class="progress-bar"><span style="width:100%;"></span></div></td>
-                  <td><span class="badge badge--ok">Terminado</span></td>
+                  <td><?= htmlspecialchars($k['titulo']) ?></td>
+                  <td><?= htmlspecialchars($k['categorias'] ?? '—') ?></td>
+                  <td><?= Formato::fecha($k['fecha_inscripcion']) ?></td>
+                  <td><?= Formato::fecha($k['ultima_fecha_acceso']) ?></td>
+                  <td><?= Formato::fecha($k['fecha_terminacion']) ?></td>
+                  <td><div class="progress-bar"><span style="width:<?= (int) $k['avance'] ?>%;"></span></div></td>
+                  <td>
+                    <?= $k['completado'] ? '<span class="badge badge--ok">Terminado</span>' : '<span class="badge badge--warn">En curso</span>' ?>
+                    <?= $k['activo'] ? '' : '<span class="badge badge--off">Baja</span>' ?>
+                  </td>
+                  <td>
+                    <?php if ($k['completado']): ?>
+                      <a class="btn btn--outline btn--sm" href="index.php?ruta=diploma&amp;curso=<?= (int) $k['curso_id'] ?>">Diploma</a>
+                    <?php elseif ($k['activo']): ?>
+                      <a class="btn btn--ghost btn--sm" href="index.php?ruta=curso&amp;id=<?= (int) $k['curso_id'] ?>">Continuar</a>
+                    <?php endif; ?>
+                  </td>
                 </tr>
-                <tr>
-                  <td>MVC y arquitectura en tres capas con PHP</td>
-                  <td>IT &amp; Software</td>
-                  <td>14 ago 2026</td>
-                  <td>13 sep 2026</td>
-                  <td><div class="progress-bar"><span style="width:50%;"></span></div></td>
-                  <td><span class="badge badge--warn">En curso</span></td>
-                </tr>
-                <tr>
-                  <td>Introducción a APIs REST para no programadores</td>
-                  <td>Negocios</td>
-                  <td>02 jul 2026</td>
-                  <td>10 jul 2026</td>
-                  <td><div class="progress-bar"><span style="width:100%;"></span></div></td>
-                  <td><span class="badge badge--ok">Terminado</span></td>
-                </tr>
+                <?php endforeach; ?>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="dash-tab-panel" id="dashtab-mensajes">
-          <div class="panel messenger">
-            <div class="panel__head"><h3>Mensajes</h3></div>
-            <div class="messenger__layout">
-              <div class="messenger__list">
-                <div class="messenger__item is-active">
-                  <div class="dash-nav__avatar" style="width:36px; height:36px; background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
-                  <div class="messenger__item-body">
-                    <strong>Fausto Islas</strong>
-                    <span>¿Ya viste el material del nivel 4?</span>
-                  </div>
-                  <span class="messenger__time">10:24</span>
-                </div>
-                <div class="messenger__item">
-                  <div class="dash-nav__avatar" style="width:36px; height:36px;"></div>
-                  <div class="messenger__item-body">
-                    <strong>L. Reyes</strong>
-                    <span>Gracias por tu comentario en el curso</span>
-                  </div>
-                  <span class="messenger__time">Ayer</span>
-                </div>
-                <div class="messenger__item">
-                  <div class="dash-nav__avatar" style="width:36px; height:36px; background:linear-gradient(135deg, var(--sky), var(--cyan));"></div>
-                  <div class="messenger__item-body">
-                    <strong>M. Cantú</strong>
-                    <span>Con gusto, cualquier duda me avisas</span>
-                  </div>
-                  <span class="messenger__time">Lun</span>
-                </div>
-              </div>
-              <div class="messenger__thread">
-                <div class="messenger__thread-head">
-                  <div class="dash-nav__avatar" style="width:32px; height:32px; background:linear-gradient(135deg, var(--teal), var(--primary));"></div>
-                  <div><strong>Fausto Islas</strong><span class="field-hint">Instructor · MVC y arquitectura en tres capas</span></div>
-                </div>
-                <div class="messenger__bubble messenger__bubble--in">¿Ya viste el material del nivel 4? Cualquier duda me dices.</div>
-                <div class="messenger__bubble messenger__bubble--out">Sí, ya casi lo termino. Tengo una duda sobre el middleware.</div>
-                <div class="messenger__bubble messenger__bubble--in">Claro, dime.</div>
-                <div class="messenger__thread-input">
-                  <input type="text" placeholder="Escribe un mensaje…">
-                  <button class="btn btn--primary btn--sm">Enviar</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <?php require dirname(__DIR__) . '/_mensajeria.php'; ?>
         </div>
 
         <div class="dash-tab-panel" id="dashtab-perfil">
-          <div class="panel" style="max-width:520px;">
-            <div class="panel__head"><h3>Mi perfil</h3></div>
-            <div class="avatar-upload" style="margin-bottom:18px;">
-              <div class="avatar-upload__preview">🖼️</div>
-              <div class="avatar-upload__actions">
-                <button type="button" class="btn btn--outline btn--sm">Cambiar foto</button>
-                <span class="field-hint">Imagen tipo avatar (JPG o PNG).</span>
-              </div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:14px;">
-              <div class="field">
-                <label>Nombre completo</label>
-                <input type="text" value="Ana Torres">
-              </div>
-              <div class="field">
-                <label>Correo electrónico</label>
-                <input type="email" value="ana.torres@correo.com">
-              </div>
-              <div style="display:flex; gap:14px;">
-                <div class="field" style="flex:1;">
-                  <label>Género</label>
-                  <select><option>Femenino</option><option>Masculino</option><option>Otro</option><option>Prefiero no decir</option></select>
-                </div>
-                <div class="field" style="flex:1;">
-                  <label>Fecha de nacimiento</label>
-                  <input type="date" value="2003-05-14">
-                </div>
-              </div>
-              <div class="field">
-                <label>Nueva contraseña</label>
-                <input type="password" placeholder="Dejar en blanco para no cambiar">
-              </div>
-              <button class="btn btn--primary" style="align-self:flex-start;">Guardar cambios</button>
-            </div>
-          </div>
+          <?php require dirname(__DIR__) . '/_perfil_tab.php'; ?>
         </div>
 
       </div>
@@ -193,4 +144,5 @@ require dirname(__DIR__) . '/_encabezado.php';
   </div>
 </section>
 
+<?php require dirname(__DIR__) . '/_abrir_tab.php'; ?>
 <?php require dirname(__DIR__) . '/_pie.php'; ?>

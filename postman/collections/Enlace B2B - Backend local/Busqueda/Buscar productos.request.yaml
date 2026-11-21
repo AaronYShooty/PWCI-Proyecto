@@ -1,0 +1,22 @@
+$kind: http-request
+description: Busqueda basica. La busqueda por cercania aun esta en desarrollo.
+url: "{{base_url}}/api/busqueda/productos"
+method: GET
+queryParams:
+  - key: q
+    value: ""
+    disabled: true
+  - key: categoria
+    value: ""
+    disabled: true
+  - key: precioMin
+    value: ""
+    disabled: true
+  - key: precioMax
+    value: ""
+    disabled: true
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+order: 1000

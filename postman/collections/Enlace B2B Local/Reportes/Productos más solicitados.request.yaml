@@ -1,0 +1,4 @@
+$kind: http-request
+url: http://localhost:3000/api/reportes/detalle-pedido/productos-mas-solicitados
+method: GET
+order: 3000

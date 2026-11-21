@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/transacciones/{{transaccion_id}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "estado": "aprobada"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 4000

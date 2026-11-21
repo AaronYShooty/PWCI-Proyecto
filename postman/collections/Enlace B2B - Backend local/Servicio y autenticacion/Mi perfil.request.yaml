@@ -1,0 +1,9 @@
+$kind: http-request
+description: Requiere una sesion real; el modo revision no proporciona una identidad real.
+url: "{{base_url}}/api/auth/perfil"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_comprador}}"
+order: 4000
