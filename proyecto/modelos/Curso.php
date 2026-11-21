@@ -2,7 +2,7 @@
 class Curso
 {
     private const COLUMNAS = 'c.id AS id_curso, c.titulo, c.descripcion, c.nivel, c.precio, c.imagen,
-        c.instructor_id AS id_instructor, u.nombre_completo AS instructor, c.fecha_publicacion, c.activo,
+        c.instructor_id AS id_instructor, u.nombre_completo AS instructor, u.foto AS foto_instructor, c.fecha_publicacion, c.activo,
         (SELECT ROUND(AVG(m.calificacion), 1) FROM comentarios m
           WHERE m.curso_id = c.id AND m.eliminado = 0) AS promedio_calificacion';
 
@@ -113,6 +113,14 @@ class Curso
 
         $this->db->beginTransaction();
         try {
+            if (($d['activo'] ?? false) === true) {
+                $curso = $this->db->prepare('SELECT id FROM cursos WHERE id = ? FOR UPDATE');
+                $curso->execute([$id]);
+                $niveles = $this->db->prepare('SELECT 1 FROM niveles WHERE curso_id = ? LIMIT 1');
+                $niveles->execute([$id]);
+                if (!$niveles->fetchColumn()) throw new DomainException('Agrega un nivel con video antes de publicar.');
+                $sets[] = 'fecha_publicacion = COALESCE(fecha_publicacion, NOW())';
+            }
             if ($sets) {
                 $this->db->prepare('UPDATE cursos SET ' . implode(', ', $sets) . ' WHERE id = :id')->execute($params);
             }
@@ -142,7 +150,7 @@ class Curso
         $ids = array_column($cursos, 'id_curso');
         $marcas = implode(',', array_fill(0, count($ids), '?'));
         $st = $this->db->prepare(
-            "SELECT cc.curso_id, g.nombre FROM curso_categoria cc
+            "SELECT cc.curso_id, g.id, g.nombre FROM curso_categoria cc
              JOIN categorias g ON g.id = cc.categoria_id
              WHERE cc.curso_id IN ($marcas) ORDER BY g.nombre"
         );
@@ -150,7 +158,7 @@ class Curso
 
         $categorias = [];
         foreach ($st->fetchAll() as $fila) {
-            $categorias[$fila['curso_id']][] = $fila['nombre'];
+            $categorias[$fila['curso_id']][(int) $fila['id']] = $fila['nombre'];
         }
 
         return array_map(fn($c) => [
@@ -162,8 +170,10 @@ class Curso
             'imagen'                => $c['imagen'],
             'id_instructor'         => (int) $c['id_instructor'],
             'instructor'            => $c['instructor'],
+            'foto_instructor'       => $c['foto_instructor'],
             'fecha_publicacion'     => $c['fecha_publicacion'],
-            'categorias'            => $categorias[$c['id_curso']] ?? [],
+            'categorias'            => array_values($categorias[$c['id_curso']] ?? []),
+            'ids_categorias'        => array_keys($categorias[$c['id_curso']] ?? []),
             'promedio_calificacion' => $c['promedio_calificacion'] === null ? null : (float) $c['promedio_calificacion'],
             'activo'                => (bool) $c['activo'],
         ], $cursos);

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{base_url}}/api/productos"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 1000

@@ -6,7 +6,7 @@ $usuario = $_SESSION['usuario'] ?? null;
 $rol = $usuario['rol'] ?? 'visitante';
 $menus = [
   'visitante'     => ['inicio' => 'Inicio', 'login' => 'Iniciar sesión', 'registro' => 'Registro'],
-  'estudiante'    => ['inicio' => 'Inicio', 'estudiante' => 'Mi panel', 'curso' => 'Detalle de curso', 'diploma' => 'Diploma', 'perfil' => 'Mi perfil'],
+  'estudiante'    => ['inicio' => 'Inicio', 'estudiante' => 'Mi panel', 'diploma' => 'Diploma', 'perfil' => 'Mi perfil'],
   'instructor'    => ['inicio' => 'Inicio', 'instructor' => 'Mi panel', 'crear-curso' => 'Crear curso', 'perfil' => 'Mi perfil'],
   'administrador' => ['inicio' => 'Inicio', 'admin' => 'Panel de administración', 'perfil' => 'Mi perfil'],
 ];

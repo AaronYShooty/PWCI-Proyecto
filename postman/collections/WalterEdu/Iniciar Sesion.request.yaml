@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/sesiones"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"correo\": \"ana@test.com\",\r
+
+    \  \"password\": \"Walter123!\"\r
+
+    }"
+order: 2000

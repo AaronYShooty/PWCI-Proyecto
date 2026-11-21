@@ -37,7 +37,7 @@ $miId = (int) $_SESSION['usuario']['id'];
       <?php foreach ($hilo as $m): ?>
         <div class="messenger__bubble messenger__bubble--<?= (int) $m['emisor_id'] === $miId ? 'out' : 'in' ?>">
           <?= nl2br(htmlspecialchars($m['texto'])) ?>
-          <span class="field-hint" style="display:block; margin-top:4px;"><?= Formato::fecha($m['fecha_envio']) ?> · <?= date('H:i', strtotime($m['fecha_envio'])) ?></span>
+          <span class="field-hint messenger__timestamp"><?= Formato::fecha($m['fecha_envio']) ?> · <?= date('H:i', strtotime($m['fecha_envio'])) ?></span>
         </div>
       <?php endforeach; ?>
       <form class="messenger__thread-input" method="post" action="index.php?ruta=mensaje-enviar">

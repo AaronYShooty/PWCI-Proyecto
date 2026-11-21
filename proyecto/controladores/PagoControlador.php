@@ -12,9 +12,9 @@ class PagoControlador extends Controlador
     // POST desde el detalle del curso: gratis → inscribe directo; con costo → página de pago.
     public function comprar(): void
     {
-        $cursoId = (int) ($_POST['curso'] ?? 0);
+        $cursoId = filter_var($_POST['curso'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->redirigir('curso&id=' . $cursoId);
-        if (!hash_equals($_SESSION['csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
+        if (!$this->csrfValido($_POST['csrf'] ?? null)) {
             $this->aviso('error', 'La sesión del formulario expiró. Intenta de nuevo.', $cursoId);
         }
 
@@ -35,7 +35,7 @@ class PagoControlador extends Controlador
     // GET: nuestra página de pago.
     public function formulario(): void
     {
-        $cursoId = (int) ($_GET['curso'] ?? 0);
+        $cursoId = filter_var($_GET['curso'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
         $usuarioId = (int) $_SESSION['usuario']['id'];
         $curso = $cursoId > 0 ? $this->cursos->obtenerPorId($cursoId) : null;
         if (!$curso) $this->aviso('error', 'El curso no existe o ya no está disponible.', 0);
@@ -46,12 +46,34 @@ class PagoControlador extends Controlador
         $llavePublica = Entorno::obtener('STRIPE_PUBLISHABLE_KEY');
         $error = null;
         $secreto = null;
+        $pendiente = false;
+        $vale = null;
 
         if ($llavePublica === '') {
-            $error = 'Falta STRIPE_PUBLISHABLE_KEY en el archivo .env.';
+            $error = 'El sistema de pagos todavía no está configurado.';
         } else {
             try {
-                $secreto = $this->pasarela->crearIntento($curso, $usuarioId)['secreto'];
+                $orden = $this->inscripciones->prepararOrden($usuarioId, $cursoId, (float) $curso['precio']);
+                $curso['precio'] = (float) $orden['monto'];
+                $cobro = $orden['stripe_intent'] ? $this->pasarela->obtenerIntento($orden['stripe_intent']) : null;
+                if (($cobro['estado'] ?? '') === 'canceled') {
+                    $this->inscripciones->reiniciarOrden($orden);
+                    $this->redirigir('pago&curso=' . $cursoId);
+                }
+                if ($cobro === null) {
+                    $cobro = $this->pasarela->crearIntento($curso, $usuarioId, $orden['clave']);
+                    $this->inscripciones->asociarOrden($orden, $cobro['id']);
+                }
+                if ($cobro['estado'] === 'succeeded') {
+                    $orden['stripe_intent'] = $cobro['id'];
+                    $this->registrar($orden, $cobro);
+                    $this->aviso('ok', '¡Pago confirmado! Ya tienes acceso al curso.', $cursoId);
+                }
+                $secreto = $cobro['secreto'];
+                $pendiente = $this->pagoPendiente($cobro);
+                $vale = $cobro['vale'];
+            } catch (DomainException $e) {
+                $error = $e->getMessage();
             } catch (Throwable $e) {
                 error_log('Stripe: ' . $e->getMessage());
                 $error = 'No pudimos preparar el pago. Intenta de nuevo en unos minutos.' . $this->detalleDepuracion($e);
@@ -63,6 +85,8 @@ class PagoControlador extends Controlador
             'llavePublica' => $llavePublica,
             'secreto'      => $secreto,
             'error'        => $error,
+            'pendiente'    => $pendiente,
+            'vale'         => $vale,
             'csrf'         => $_SESSION['csrf'],
             'urlRetorno'   => $this->urlBase() . '?ruta=pago-retorno',
             'urlConfirmar' => 'index.php?ruta=pago-confirmar',
@@ -72,49 +96,125 @@ class PagoControlador extends Controlador
     // POST (fetch, JSON): el navegador avisa que Stripe cobró; el servidor lo verifica con Stripe.
     public function confirmar(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Allow: POST');
+            $this->respuesta(false, 'Método no permitido.', 405);
+        }
+        if (strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) !== 'application/json') {
+            $this->respuesta(false, 'Envía un cuerpo en formato JSON.', 415);
+        }
         $cuerpo = json_decode((string) file_get_contents('php://input'), true);
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-        if (!hash_equals($_SESSION['csrf'] ?? '', $token)) {
+        if (!$this->csrfValido($token)) {
             $this->respuesta(false, 'La sesión del formulario expiró. Recarga la página.', 403);
         }
-        $intento = is_array($cuerpo) ? (string) ($cuerpo['payment_intent'] ?? '') : '';
-
-        $r = $this->verificarYRegistrar($intento);
-        if ($r['ok']) $_SESSION['aviso_pago'] = ['tipo' => 'ok', 'mensaje' => $r['mensaje']];
-        $this->respuesta($r['ok'], $r['mensaje'], $r['ok'] ? 200 : 400,
-            ['redirigir' => 'index.php?ruta=curso&id=' . $r['curso_id']]);
+        $r = $this->verificarYRegistrar($cuerpo['payment_intent'] ?? null);
+        if ($r['codigo'] === 200) $_SESSION['aviso_pago'] = ['tipo' => 'ok', 'mensaje' => $r['mensaje']];
+        $this->respuesta($r['codigo'] < 400, $r['mensaje'], $r['codigo'], [
+            'redirigir' => 'index.php?ruta=curso&id=' . $r['curso_id'],
+            'pendiente' => $r['codigo'] === 202, 'vale' => $r['vale'],
+        ]);
     }
 
     // GET: regreso de Stripe cuando un método de pago necesitó redirección.
     public function retorno(): void
     {
-        $r = $this->verificarYRegistrar((string) ($_GET['payment_intent'] ?? ''));
-        $this->aviso($r['ok'] ? 'ok' : 'error', $r['mensaje'], $r['curso_id']);
+        $r = $this->verificarYRegistrar($_GET['payment_intent'] ?? null);
+        if ($r['codigo'] === 202) $this->redirigir('pago&curso=' . $r['curso_id']);
+        $this->aviso($r['codigo'] === 200 ? 'ok' : 'error', $r['mensaje'], $r['curso_id']);
     }
 
-    // Confirma con Stripe que el cobro se completó y, solo entonces, inscribe al estudiante.
-    private function verificarYRegistrar(string $intento): array
+    public function webhook(): void
     {
-        $fallo = fn(string $m, int $curso = 0) => ['ok' => false, 'mensaje' => $m, 'curso_id' => $curso];
-        if (!preg_match('/^pi_[A-Za-z0-9_]{10,200}$/', $intento)) return $fallo('Pago no reconocido.');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Allow: POST');
+            $this->respuesta(false, 'Método no permitido.', 405);
+        }
+        $secreto = Entorno::obtener('STRIPE_WEBHOOK_SECRET');
+        if ($secreto === '') $this->respuesta(false, 'Webhook sin configurar.', 503);
 
-        $usuarioId = (int) $_SESSION['usuario']['id'];
+        $cuerpo = (string) file_get_contents('php://input');
+        $cabecera = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+        $marca = 0;
+        $firmas = [];
+        foreach (explode(',', $cabecera) as $parte) {
+            [$nombre, $valor] = array_pad(explode('=', trim($parte), 2), 2, '');
+            if ($nombre === 't' && ctype_digit($valor)) $marca = (int) $valor;
+            if ($nombre === 'v1') $firmas[] = $valor;
+        }
+        $esperada = hash_hmac('sha256', $marca . '.' . $cuerpo, $secreto);
+        $valida = false;
+        foreach ($firmas as $firma) if (hash_equals($esperada, $firma)) $valida = true;
+        if (!$valida || abs(time() - $marca) > 300) $this->respuesta(false, 'Firma no válida.', 400);
+
+        $evento = json_decode($cuerpo, true);
+        if (!is_array($evento)) $this->respuesta(false, 'Evento no válido.', 400);
+        $id = $evento['data']['object']['id'] ?? null;
+        if (($evento['type'] ?? null) === 'payment_intent.succeeded' && $this->intentoValido($id)) {
+            try {
+                $orden = $this->inscripciones->ordenPorIntento($id);
+                if ($orden !== null) $this->registrar($orden, $this->pasarela->obtenerIntento($id));
+            } catch (Throwable $e) {
+                error_log('Stripe webhook: ' . $e->getMessage());
+                $this->respuesta(false, 'No se pudo registrar el pago.', 500);
+            }
+        }
+        $this->respuesta(true, 'Evento recibido.', 200);
+    }
+
+    private function verificarYRegistrar(mixed $intento): array
+    {
+        $resultado = fn(int $codigo, string $mensaje, int $curso = 0, ?string $vale = null) => [
+            'codigo' => $codigo, 'mensaje' => $mensaje, 'curso_id' => $curso, 'vale' => $vale,
+        ];
+        if (!$this->intentoValido($intento)) return $resultado(400, 'Pago no reconocido.');
+
         try {
-            $previo = $this->inscripciones->compraRegistrada($intento);
+            $orden = $this->inscripciones->ordenPorIntento($intento);
+            if (!$orden || (int) $orden['usuario_id'] !== (int) $_SESSION['usuario']['id']) {
+                return $resultado(404, 'Pago no reconocido.');
+            }
+            $cursoId = (int) $orden['curso_id'];
             $cobro = $this->pasarela->obtenerIntento($intento);
+            if ($this->pagoPendiente($cobro)) {
+                return $resultado(202, 'El pago sigue pendiente. Consulta su estado cuando hayas pagado.', $cursoId, $cobro['vale']);
+            }
+            if ($cobro['estado'] !== 'succeeded') return $resultado(400, 'El pago no se completó.', $cursoId);
+            $this->registrar($orden, $cobro);
+            return $resultado(200, '¡Pago confirmado! Ya tienes acceso al curso.', $cursoId);
         } catch (Throwable $e) {
             error_log('Stripe: ' . $e->getMessage());
-            return $fallo('No pudimos confirmar tu pago. Si te lo cobraron, contáctanos.' . $this->detalleDepuracion($e));
+            return $resultado(502, 'No pudimos confirmar tu pago. Consulta el estado antes de volver a pagar.');
         }
+    }
 
-        if ($cobro['usuario_id'] !== $usuarioId) return $fallo('Pago no reconocido.');          // cobro de otro usuario
-        if (!$cobro['pagado']) return $fallo('El pago no se completó. No se te cobró.', $cobro['curso_id']);
-        if (!$this->cursos->obtenerPorId($cobro['curso_id'], false)) return $fallo('Pago no reconocido.');
-
-        if (!$previo) {
-            $this->inscripciones->registrarCompra($usuarioId, $cobro['curso_id'], $cobro['id'], $cobro['monto'], $cobro['moneda']);
+    private function registrar(array $orden, array $cobro): void
+    {
+        $formas = ['card' => 'Tarjeta (Stripe)', 'oxxo' => 'Efectivo en OXXO (Stripe)'];
+        $forma = $formas[$cobro['metodo']] ?? null;
+        if ($cobro['estado'] !== 'succeeded' || !$forma || $cobro['id'] !== $orden['stripe_intent']
+            || $cobro['usuario_id'] !== (int) $orden['usuario_id'] || $cobro['curso_id'] !== (int) $orden['curso_id']
+            || $cobro['moneda'] !== 'mxn' || (int) round($cobro['monto'] * 100) !== (int) round($orden['monto'] * 100)) {
+            throw new RuntimeException('Los datos del pago no coinciden con la orden.');
         }
-        return ['ok' => true, 'mensaje' => '¡Pago confirmado! Ya tienes acceso al curso.', 'curso_id' => $cobro['curso_id']];
+        if (!$this->inscripciones->compraRegistrada($cobro['id'])) {
+            $this->inscripciones->registrarCompra($cobro['usuario_id'], $cobro['curso_id'], $cobro['id'], $cobro['monto'], $cobro['moneda'], $forma);
+        }
+    }
+
+    private function intentoValido(mixed $intento): bool
+    {
+        return is_string($intento) && preg_match('/^pi_[A-Za-z0-9_]{10,200}$/D', $intento);
+    }
+
+    private function pagoPendiente(array $cobro): bool
+    {
+        return $cobro['estado'] === 'processing' || ($cobro['estado'] === 'requires_action' && $cobro['metodo'] === 'oxxo');
+    }
+
+    private function csrfValido(mixed $token): bool
+    {
+        return !empty($_SESSION['csrf']) && is_string($token) && hash_equals($_SESSION['csrf'], $token);
     }
 
     // Responde JSON y TERMINA la petición: ninguna validación fallida puede seguir ejecutando código.

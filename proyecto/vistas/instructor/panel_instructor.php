@@ -62,6 +62,9 @@ require dirname(__DIR__) . '/_encabezado.php';
                 <?php if ($c['activo']): ?>
                   <a href="index.php?ruta=curso&amp;id=<?= (int) $c['curso_id'] ?>" class="btn btn--ghost btn--sm">Ver</a>
                 <?php endif; ?>
+                <div class="curso-acciones">
+                <a class="btn btn--outline btn--sm" href="index.php?ruta=crear-curso&amp;curso=<?= (int) $c['curso_id'] ?>">Editar datos</a>
+                <a class="btn btn--outline btn--sm" href="index.php?ruta=editar-niveles&amp;curso=<?= (int) $c['curso_id'] ?>">Editar niveles</a>
                 <form method="post" action="index.php?ruta=curso-estado" style="margin:0;"
                       <?= $c['activo'] ? 'onsubmit="return confirm(\'El curso dejará de mostrarse en el catálogo, pero se conserva en tus reportes. ¿Dar de baja?\');"' : '' ?>>
                   <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
@@ -69,6 +72,7 @@ require dirname(__DIR__) . '/_encabezado.php';
                   <input type="hidden" name="accion" value="<?= $c['activo'] ? 'baja' : 'reactivar' ?>">
                   <button type="submit" class="btn <?= $c['activo'] ? 'btn--danger' : 'btn--outline' ?> btn--sm"><?= $c['activo'] ? 'Dar de baja' : 'Reactivar' ?></button>
                 </form>
+                </div>
               </div>
               <?php endforeach; ?>
             </div>

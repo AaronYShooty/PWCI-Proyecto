@@ -89,12 +89,12 @@ require dirname(__DIR__) . '/_encabezado.php';
             <div class="panel">
               <div class="panel__head"><h3>Categorías</h3></div>
               <table>
-                <thead><tr><th>Categoría</th><th>Cursos</th><th>Creada por</th><th>Fecha</th></tr></thead>
-                <tbody id="categorias-cuerpo"><tr><td colspan="4">Cargando categorías…</td></tr></tbody>
+                <thead><tr><th>Categoría</th><th>Cursos</th><th>Creada por</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody id="categorias-cuerpo"><tr><td colspan="5">Cargando categorías…</td></tr></tbody>
               </table>
             </div>
             <div class="panel">
-              <div class="panel__head"><h3 style="font-size:0.98rem;">Nueva categoría</h3></div>
+              <div class="panel__head"><h3 id="categoria-form-titulo" style="font-size:0.98rem;">Nueva categoría</h3></div>
               <form id="form-categoria" style="display:flex; flex-direction:column; gap:12px;" novalidate>
                 <div class="form-alert" role="status" aria-live="polite"></div>
                 <div class="field">
@@ -105,7 +105,10 @@ require dirname(__DIR__) . '/_encabezado.php';
                   <label for="cat-descripcion">Descripción</label>
                   <textarea id="cat-descripcion" name="descripcion" rows="3" placeholder="¿Qué tipo de cursos contendrá?" maxlength="1000"></textarea>
                 </div>
-                <button type="submit" class="btn btn--primary btn--sm" style="align-self:flex-start;">+ Agregar categoría</button>
+                <div class="curso-acciones">
+                  <button type="submit" class="btn btn--primary btn--sm">Agregar categoría</button>
+                  <button type="button" class="btn btn--outline btn--sm" id="categoria-cancelar" hidden>Cancelar</button>
+                </div>
               </form>
             </div>
           </div>

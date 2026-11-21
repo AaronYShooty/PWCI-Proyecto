@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/inventarios"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "productoId": "{{producto_id}}",
+      "existencias": 10,
+      "stockMinimo": 2
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 3000

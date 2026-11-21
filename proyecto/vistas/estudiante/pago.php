@@ -14,10 +14,16 @@ require dirname(__DIR__) . '/_encabezado.php';
     <div class="course-detail">
       <div class="course-detail__main">
         <div class="panel">
-          <div class="panel__head"><h3>Pago con tarjeta</h3></div>
+          <div class="panel__head"><h3>Forma de pago</h3></div>
 
           <?php if ($error): ?>
             <div class="form-alert is-visible form-alert--error" role="alert"><?= htmlspecialchars($error) ?></div>
+          <?php elseif ($pendiente): ?>
+            <div class="form-alert is-visible form-alert--ok" role="status">Tu pago sigue pendiente. El acceso se activa al confirmarse.</div>
+            <div class="curso-acciones">
+              <?php if ($vale): ?><a class="btn btn--primary btn--sm" href="<?= htmlspecialchars($vale) ?>" target="_blank" rel="noopener noreferrer">Abrir referencia de OXXO</a><?php endif; ?>
+              <a class="btn btn--outline btn--sm" href="index.php?ruta=pago&amp;curso=<?= $curso['id_curso'] ?>">Consultar estado</a>
+            </div>
           <?php else: ?>
           <div id="pago-app"
                data-llave="<?= htmlspecialchars($llavePublica) ?>"
@@ -29,7 +35,11 @@ require dirname(__DIR__) . '/_encabezado.php';
               <div id="payment-element"><span class="field-hint">Cargando formulario de pago…</span></div>
               <div class="form-alert" id="pago-aviso" role="alert" aria-live="polite"></div>
               <button type="submit" class="btn btn--primary" id="pago-boton" disabled>Pagar <?= Formato::moneda((float) $curso['precio']) ?></button>
-              <span class="field-hint">🔒 Los datos de tu tarjeta los captura Stripe de forma segura; WalterEdu nunca los recibe. Pagos de prueba: 4242 4242 4242 4242.</span>
+              <div class="curso-acciones" id="pago-pendiente" hidden>
+                <a class="btn btn--primary btn--sm" id="pago-vale" target="_blank" rel="noopener noreferrer" hidden>Abrir referencia de OXXO</a>
+                <a class="btn btn--outline btn--sm" href="index.php?ruta=pago&amp;curso=<?= $curso['id_curso'] ?>">Consultar estado</a>
+              </div>
+              <span class="field-hint">Stripe procesa el pago. Si eliges OXXO, tendrás acceso cuando se confirme el pago en efectivo.</span>
             </form>
           </div>
           <?php endif; ?>
@@ -51,7 +61,7 @@ require dirname(__DIR__) . '/_encabezado.php';
   </div>
 </section>
 
-<?php if (!$error): ?>
+<?php if (!$error && !$pendiente): ?>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="publico/js/pago.js"></script>
 <?php endif; ?>

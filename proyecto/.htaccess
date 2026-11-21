@@ -1,5 +1,12 @@
 RewriteEngine On
 
+RewriteRule (^|/)\. - [F]
+RewriteRule ^(?:almacen|config|controladores|database|middleware|modelos|vistas)(?:/|$) - [F,NC]
+
+RewriteRule ^api/niveles/([0-9]+)/(video|avance)/?$ api/aprendizaje.php?recurso=$2&id=$1 [END]
+RewriteRule ^api/adjuntos/([0-9]+)/?$ api/aprendizaje.php?recurso=adjunto&id=$1 [END]
+RewriteRule ^api/cursos/([0-9]+)/resenas/?$ api/aprendizaje.php?recurso=resena&id=$1 [END]
+
 RewriteRule ^api/cursos/?$ api/cursos.php [L,QSA]
 RewriteRule ^api/cursos/([^/]+)/?$ api/cursos.php?id=$1 [L,QSA]
 

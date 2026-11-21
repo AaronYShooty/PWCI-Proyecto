@@ -114,10 +114,6 @@ require dirname(__DIR__) . '/_encabezado.php';
           <button type="submit" class="btn btn--primary" style="margin-top:8px;">Crear mi cuenta</button>
         </form>
 
-        <div class="admin-note">
-          🔒 Las cuentas de <strong>administrador</strong> no se crean desde este formulario. Se asignan directamente en la base de datos por el equipo del portal.
-        </div>
-
         <p class="auth-switch">¿Ya tienes cuenta? <a href="index.php?ruta=login">Inicia sesión</a></p>
       </div>
     </div>

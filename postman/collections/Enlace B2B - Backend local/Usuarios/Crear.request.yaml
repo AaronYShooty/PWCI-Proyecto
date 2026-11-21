@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/usuarios"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "empresaId": "{{empresa_id}}",
+      "nombre": "Usuario de prueba",
+      "correo": "usuario@example.test",
+      "telefono": "8181234567",
+      "contrasena": "{{contrasena_prueba}}",
+      "rol": "comprador"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 3000

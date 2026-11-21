@@ -9,12 +9,22 @@ class Comentario
         $st = $this->db->prepare(
             'SELECT m.id, m.calificacion, m.fecha_creacion, m.eliminado,
                     IF(m.eliminado = 1, NULL, m.texto) AS texto,
-                    u.nombre_completo AS autor, u.foto
+                    m.usuario_id, u.nombre_completo AS autor, u.foto
              FROM comentarios m JOIN usuarios u ON u.id = m.usuario_id
              WHERE m.curso_id = :c ORDER BY m.fecha_creacion DESC'
         );
         $st->execute(['c' => $cursoId]);
         return $st->fetchAll();
+    }
+
+    public function publicar(int $cursoId, int $usuarioId, string $texto, int $calificacion): bool
+    {
+        $st = $this->db->prepare(
+            'INSERT INTO comentarios (curso_id, usuario_id, texto, calificacion) VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id'
+        );
+        $st->execute([$cursoId, $usuarioId, $texto, $calificacion]);
+        return $st->rowCount() === 1;
     }
 
     // Lista completa para moderación (administrador).

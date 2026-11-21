@@ -17,6 +17,8 @@ Portal web de cursos en línea con tres perfiles (estudiante, instructor y admin
 - Middleware de control de acceso (sesión y rol) y de CORS.
 - API propia en JSON para cursos (consulta, alta, modificación y baja) y categorías (consulta y alta).
 - Catálogo público, creación de cursos y gestión de categorías, que consumen la API con `fetch`.
+- Niveles con video y material PDF, avance al llegar al final del video, diploma y reseñas de cursos completados.
+- Inscripciones gratuitas, pagos con tarjeta y efectivo en OXXO mediante Stripe, y reportes desde los tres paneles.
 
 ## Requisitos
 
@@ -29,6 +31,18 @@ XAMPP con Apache (módulo `mod_rewrite` activo y `AllowOverride All`), PHP 8.1 o
 3. Copia `proyecto/.env.example` como `proyecto/.env` y ajusta los datos de conexión si hace falta.
 4. Abre `http://localhost/<carpeta-del-repositorio>/proyecto/`.
 
+Si ya tienes la base de la rama `feature/pago-propio-y-paneles`, aplica `proyecto/database/migracion_revision_final.sql` para conservar tus datos. Si tu base es anterior al cambio a PaymentIntents y conserva el esquema de Stripe Checkout, aplica primero `migracion_pagos_intent.sql`. El archivo `schema.sql` es para instalaciones nuevas.
+
+Apache debe poder escribir en `proyecto/almacen/`. La aplicación admite MP4 y WebM de hasta 100 MB, y PDF de hasta 15 MB. PHP también aplica sus propios límites de carga. Si usas archivos grandes en XAMPP, ajusta `upload_max_filesize` y `post_max_size` en `php.ini` y reinicia Apache. El límite de la petición debe admitir ambos archivos y los campos del formulario.
+
+Para demostrar pagos, usa `STRIPE_SECRET_KEY` y `STRIPE_PUBLISHABLE_KEY` de prueba del mismo entorno. Habilita tarjeta y OXXO en los [métodos de pago del Dashboard de Stripe](https://dashboard.stripe.com/settings/payment_methods) de ese entorno. WalterEdu ofrece los métodos habilitados que admite para ese importe. OXXO está disponible de $10.00 a $10,000.00 MXN. Para recibir la confirmación sin que el alumno vuelva al portal, reenvía el evento `payment_intent.succeeded` al webhook con Stripe CLI y configura su secreto:
+
+```sh
+stripe listen --events payment_intent.succeeded --forward-to http://localhost/WalterEdu/proyecto/index.php?ruta=stripe-webhook
+```
+
+Guarda el secreto que muestra Stripe CLI como `STRIPE_WEBHOOK_SECRET` en el `.env`. La pantalla de pago también permite consultar un cobro pendiente después de pagar la referencia.
+
 ## Cuentas
 
 El formulario de registro crea cuentas de estudiante o instructor. Para tener un administrador, registra una cuenta y cambia su rol en la base de datos:
@@ -39,22 +53,7 @@ UPDATE usuarios SET rol = 'administrador' WHERE email = 'tu@correo.com';
 
 ## API
 
-Todas las respuestas usan la misma envoltura:
-
-```json
-{ "exito": true, "mensaje": "Consulta realizada correctamente", "datos": [], "errores": [] }
-```
-
-| Método | Ruta | Acceso |
-|---|---|---|
-| GET | `/api/cursos` (filtros: `categoria`, `titulo`, `nivel`, `publicador`, `fecha_inicio`, `fecha_fin`, `orden`, `pagina`, `por_pagina`) | Público |
-| GET | `/api/cursos/{id}` | Público |
-| POST | `/api/cursos` | Instructor o administrador |
-| PUT, PATCH, DELETE | `/api/cursos/{id}` | Dueño del curso o administrador |
-| GET | `/api/categorias` | Público |
-| POST | `/api/categorias` | Administrador |
-
-Códigos de estado: 200, 201, 400, 401, 403, 404, 405, 415 y 500.
+[Documentación de la API](docs/api.md) · [Colección de Postman](docs/WalterEdu.postman_collection.json)
 
 ## Estructura
 

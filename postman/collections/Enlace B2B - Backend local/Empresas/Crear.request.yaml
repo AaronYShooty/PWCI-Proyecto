@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/empresas"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "razonSocial": "Empresa de prueba",
+      "rfc": "AAA010101AAA",
+      "tipo": "comprador",
+      "giro": "Industrial",
+      "calle": "Calle de prueba",
+      "colonia": "Centro",
+      "codigoPostal": "64000",
+      "municipio": "Monterrey"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 3000

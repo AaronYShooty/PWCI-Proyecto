@@ -14,7 +14,7 @@ require dirname(__DIR__) . '/_encabezado.php';
         <h1 style="margin-top:14px;">Cursos en línea guiados por instructores reales</h1>
         <p>Explora cursos por niveles, avanza cuando quieras y obtén tu diploma al terminar. Walter te acompaña en cada paso.</p>
         <form class="search-bar" id="form-busqueda" role="search">
-          <input type="search" id="busqueda-titulo" placeholder="Buscar cursos por título…" maxlength="150" aria-label="Buscar cursos por título">
+          <input type="search" id="busqueda-titulo" placeholder="Buscar cursos por nombre…" maxlength="150" aria-label="Buscar cursos por nombre">
           <button type="submit">Buscar</button>
         </form>
       </div>

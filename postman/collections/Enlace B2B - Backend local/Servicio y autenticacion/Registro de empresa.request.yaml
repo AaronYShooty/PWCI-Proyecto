@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/registro"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "razonSocial": "Empresa de prueba",
+      "rfc": "AAA010101AAA",
+      "tipoEmpresa": "comprador",
+      "giro": "Industrial",
+      "calle": "Calle de prueba",
+      "colonia": "Centro",
+      "codigoPostal": "64000",
+      "municipio": "Monterrey",
+      "nombreResponsable": "Responsable de prueba",
+      "telefono": "8181234567",
+      "correo": "usuario@example.test",
+      "contrasena": "{{contrasena_prueba}}"
+    }
+auth:
+  type: noauth
+order: 2000

@@ -35,7 +35,8 @@ CREATE TABLE cursos (
   imagen             VARCHAR(255) NULL,
   precio             DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   activo             TINYINT(1) NOT NULL DEFAULT 1,
-  fecha_publicacion  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_creacion     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha_publicacion  DATETIME NULL DEFAULT NULL,
   CONSTRAINT chk_nivel CHECK (nivel BETWEEN 1 AND 5),
   FOREIGN KEY (instructor_id) REFERENCES usuarios(id),
   INDEX (titulo), INDEX (fecha_publicacion)
@@ -57,6 +58,7 @@ CREATE TABLE niveles (
   contenido    TEXT NULL,
   video_url    VARCHAR(255) NOT NULL,
   precio       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  gratis       TINYINT(1) NOT NULL DEFAULT 0,
   FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE,
   UNIQUE (curso_id, orden)
 ) ENGINE=InnoDB;
@@ -136,7 +138,7 @@ CREATE TABLE certificados (
   FOREIGN KEY (inscripcion_id) REFERENCES inscripciones(id)
 ) ENGINE=InnoDB;
 
-INSERT INTO formas_pago (nombre) VALUES ('Tarjeta (Stripe)'), ('PayPal');
+INSERT INTO formas_pago (nombre) VALUES ('Tarjeta (Stripe)'), ('PayPal'), ('Efectivo en OXXO (Stripe)');
 
 -- Pagos con Stripe (PaymentIntent). La referencia única del cobro es stripe_payment_intent.
 CREATE TABLE IF NOT EXISTS pagos (
@@ -149,4 +151,15 @@ CREATE TABLE IF NOT EXISTS pagos (
   fecha_pago             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_pagos_intent (stripe_payment_intent),
   FOREIGN KEY (inscripcion_id) REFERENCES inscripciones(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE ordenes_pago (
+  usuario_id INT UNSIGNED NOT NULL,
+  curso_id INT UNSIGNED NOT NULL,
+  monto DECIMAL(10,2) NOT NULL,
+  clave CHAR(48) NOT NULL,
+  stripe_intent VARCHAR(255) NULL UNIQUE,
+  PRIMARY KEY (usuario_id, curso_id),
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+  FOREIGN KEY (curso_id) REFERENCES cursos(id)
 ) ENGINE=InnoDB;

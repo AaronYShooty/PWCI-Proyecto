@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/Autoload.php';
 session_start();
 
-$ruta = $_GET['ruta'] ?? 'inicio';
+$ruta = is_string($_GET['ruta'] ?? 'inicio') ? ($_GET['ruta'] ?? 'inicio') : '';
 
 // Conexión perezosa: solo se abre cuando una ruta la necesita.
 $pdo = static function (): PDO {
@@ -12,7 +12,8 @@ $pdo = static function (): PDO {
 };
 
 // Controladores armados con sus dependencias (inyección por constructor).
-$curso   = fn() => new CursoControlador(new Curso($pdo()), new Inscripcion($pdo()), new Nivel($pdo()), new Comentario($pdo()));
+$curso   = fn() => new CursoControlador(new Curso($pdo()), new Inscripcion($pdo()), new Nivel($pdo()), new Comentario($pdo()), new MediosCurso());
+$nivel   = fn() => new NivelControlador(new Curso($pdo()), new Nivel($pdo()), new MediosCurso());
 $usuario = fn() => new UsuarioControlador(new Usuario($pdo()));
 $pago    = fn() => new PagoControlador(new Curso($pdo()), new Inscripcion($pdo()), new StripeServicio());
 $panel   = fn() => new PanelControlador(
@@ -24,6 +25,7 @@ $rutas = [
     'inicio'      => fn() => $curso()->inicio(),
     'curso'       => fn() => $curso()->detalle(),
     'crear-curso' => fn() => $curso()->crear(),
+    'editar-niveles' => fn() => $nivel()->editar(),
     'login'       => fn() => $usuario()->login(),
     'registro'    => fn() => $usuario()->registro(),
     'salir'       => fn() => $usuario()->salir(),
@@ -42,12 +44,14 @@ $rutas = [
     'pago'           => fn() => $pago()->formulario(),
     'pago-confirmar' => fn() => $pago()->confirmar(),
     'pago-retorno'   => fn() => $pago()->retorno(),
+    'stripe-webhook' => fn() => $pago()->webhook(),
 ];
 
 $middlewares = [
     'curso'       => ['acceso:estudiante,instructor,administrador'],
     'perfil'      => ['acceso:estudiante,instructor,administrador'],
     'crear-curso' => ['acceso:instructor'],
+    'editar-niveles' => ['acceso:instructor'],
     'instructor'  => ['acceso:instructor'],
     'curso-estado' => ['acceso:instructor'],
     'estudiante'  => ['acceso:estudiante'],

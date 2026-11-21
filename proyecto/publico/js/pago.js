@@ -1,6 +1,5 @@
 /* Página de pago de WalterEdu: formulario de Stripe Elements dentro de nuestra propia página.
-   El servidor crea el cobro (PaymentIntent) y lo verifica al final; aquí solo se captura la tarjeta
-   en los campos seguros de Stripe y se confirma el pago. */
+   El servidor verifica el PaymentIntent antes de conceder acceso. */
 (function () {
   const raiz = document.getElementById('pago-app');
   if (!raiz) return;
@@ -9,6 +8,8 @@
   const form = document.getElementById('pago-form');
   const boton = document.getElementById('pago-boton');
   const aviso = document.getElementById('pago-aviso');
+  const acciones = document.getElementById('pago-pendiente');
+  const vale = document.getElementById('pago-vale');
 
   function mostrar(tipo, texto) {
     aviso.textContent = texto;
@@ -37,40 +38,41 @@
     const textoOriginal = boton.textContent;
     boton.textContent = 'Procesando…';
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements: elementos,
-      confirmParams: { return_url: retorno },
-      redirect: 'if_required',
-    });
+    let pagoEnviado = false;
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements: elementos,
+        confirmParams: { return_url: retorno },
+        redirect: 'if_required',
+      });
+      if (error || !paymentIntent) throw new Error(error?.message || 'No se pudo procesar el pago.');
+      pagoEnviado = ['succeeded', 'processing', 'requires_action'].includes(paymentIntent.status);
 
-    if (error) {
-      mostrar('error', error.message || 'No se pudo procesar el pago.');
+      const respuesta = await fetch(confirmar, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ payment_intent: paymentIntent.id }),
+      });
+      const cuerpo = await respuesta.json();
+      if (!respuesta.ok || !cuerpo.exito) throw new Error(cuerpo.mensaje || 'No pudimos confirmar tu pago.');
+      mostrar('ok', cuerpo.mensaje);
+      if (!cuerpo.datos.pendiente) {
+        window.location.assign(cuerpo.datos.redirigir);
+        return;
+      }
+      if (cuerpo.datos.vale) {
+        vale.href = cuerpo.datos.vale;
+        vale.hidden = false;
+      }
+    } catch (error) {
+      mostrar('error', pagoEnviado ? 'Consulta el estado del pago antes de volver a intentarlo.' : error.message);
+    }
+    if (pagoEnviado) {
+      boton.hidden = true;
+      acciones.hidden = false;
+    } else {
       boton.disabled = false;
       boton.textContent = textoOriginal;
-      return;
     }
-
-    if (paymentIntent && paymentIntent.status === 'succeeded') {
-      try {
-        const respuesta = await fetch(confirmar, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf },
-          body: JSON.stringify({ payment_intent: paymentIntent.id }),
-        });
-        const cuerpo = await respuesta.json();
-        if (cuerpo.exito) {
-          mostrar('ok', cuerpo.mensaje);
-          window.location.href = cuerpo.datos.redirigir;
-          return;
-        }
-        mostrar('error', cuerpo.mensaje || 'No pudimos confirmar tu pago.');
-      } catch (err) {
-        mostrar('error', 'El pago se realizó, pero no pudimos confirmarlo. Recarga el curso o contáctanos.');
-      }
-    } else {
-      mostrar('error', 'El pago no se completó (estado: ' + (paymentIntent ? paymentIntent.status : 'desconocido') + ').');
-    }
-    boton.disabled = false;
-    boton.textContent = textoOriginal;
   });
 })();

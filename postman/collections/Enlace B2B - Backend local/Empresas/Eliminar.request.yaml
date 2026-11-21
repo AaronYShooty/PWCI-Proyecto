@@ -1,0 +1,9 @@
+$kind: http-request
+description: Elimina el registro indicado. Usar solo con datos de prueba.
+url: "{{base_url}}/api/empresas/{{empresa_id}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_admin}}"
+order: 5000

@@ -10,6 +10,62 @@ class Inscripcion
         return $st->fetch() ?: null;
     }
 
+    public function registrarAcceso(int $inscripcionId): void
+    {
+        $this->db->prepare('UPDATE inscripciones SET ultima_fecha_acceso = NOW() WHERE id = ?')
+            ->execute([$inscripcionId]);
+    }
+
+    public function completarNivel(int $usuarioId, int $cursoId, int $nivelId): ?array
+    {
+        $this->db->beginTransaction();
+        try {
+            $curso = $this->db->prepare(
+                'SELECT u.nombre_completo FROM cursos c JOIN usuarios u ON u.id = c.instructor_id
+                 WHERE c.id = ? FOR UPDATE'
+            );
+            $curso->execute([$cursoId]);
+            $instructor = $curso->fetchColumn();
+            $inscripcion = $this->obtener($usuarioId, $cursoId);
+            $nivel = $this->db->prepare('SELECT 1 FROM niveles WHERE id = ? AND curso_id = ?');
+            $nivel->execute([$nivelId, $cursoId]);
+            if (!$instructor || !$inscripcion || !$nivel->fetchColumn()) {
+                $this->db->rollBack();
+                return null;
+            }
+
+            $id = (int) $inscripcion['id'];
+            $this->db->prepare(
+                'INSERT INTO avance_niveles (inscripcion_id, nivel_id) VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE fecha_visto = fecha_visto'
+            )->execute([$id, $nivelId]);
+            $this->registrarAcceso($id);
+
+            $avance = $this->db->prepare(
+                'SELECT COUNT(*) AS total, COUNT(a.nivel_id) AS vistos FROM niveles n
+                 LEFT JOIN avance_niveles a ON a.nivel_id = n.id AND a.inscripcion_id = ?
+                 WHERE n.curso_id = ?'
+            );
+            $avance->execute([$id, $cursoId]);
+            $conteo = $avance->fetch();
+            $terminado = (bool) $inscripcion['completado'] || (int) $conteo['vistos'] === (int) $conteo['total'];
+            if ($terminado) {
+                $this->db->prepare(
+                    'UPDATE inscripciones SET completado = 1, fecha_terminacion = COALESCE(fecha_terminacion, NOW()) WHERE id = ?'
+                )->execute([$id]);
+                $this->registrarCertificado($id, (string) $instructor);
+            }
+            $this->db->commit();
+            return [
+                'completado' => $terminado,
+                'avance' => $terminado ? 100 : (int) round(100 * $conteo['vistos'] / $conteo['total']),
+            ];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
+    }
+
     // Curso gratis: inscripción sin pago.
     public function inscribirGratis(int $usuarioId, int $cursoId): int
     {
@@ -28,8 +84,40 @@ class Inscripcion
         return $st->fetch() ?: null;
     }
 
+    public function prepararOrden(int $usuarioId, int $cursoId, float $monto): array
+    {
+        $this->db->prepare(
+            'INSERT INTO ordenes_pago (usuario_id, curso_id, monto, clave) VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE clave = clave'
+        )->execute([$usuarioId, $cursoId, $monto, bin2hex(random_bytes(24))]);
+        $st = $this->db->prepare('SELECT * FROM ordenes_pago WHERE usuario_id = ? AND curso_id = ?');
+        $st->execute([$usuarioId, $cursoId]);
+        return $st->fetch();
+    }
+
+    public function asociarOrden(array $orden, string $intento): void
+    {
+        $this->db->prepare(
+            'UPDATE ordenes_pago SET stripe_intent = ? WHERE usuario_id = ? AND curso_id = ? AND clave = ? AND stripe_intent IS NULL'
+        )->execute([$intento, $orden['usuario_id'], $orden['curso_id'], $orden['clave']]);
+    }
+
+    public function reiniciarOrden(array $orden): void
+    {
+        $this->db->prepare(
+            'UPDATE ordenes_pago SET clave = ?, stripe_intent = NULL WHERE usuario_id = ? AND curso_id = ? AND clave = ?'
+        )->execute([bin2hex(random_bytes(24)), $orden['usuario_id'], $orden['curso_id'], $orden['clave']]);
+    }
+
+    public function ordenPorIntento(string $intento): ?array
+    {
+        $st = $this->db->prepare('SELECT * FROM ordenes_pago WHERE stripe_intent = ?');
+        $st->execute([$intento]);
+        return $st->fetch() ?: null;
+    }
+
     // Registra la inscripción y el pago en una sola transacción.
-    public function registrarCompra(int $usuarioId, int $cursoId, string $intento, float $monto, string $moneda): int
+    public function registrarCompra(int $usuarioId, int $cursoId, string $intento, float $monto, string $moneda, string $forma): int
     {
         $this->db->beginTransaction();
         try {
@@ -39,9 +127,9 @@ class Inscripcion
 
             if ($id === false) {
                 $this->db->prepare(
-                    "INSERT INTO inscripciones (usuario_id, curso_id, forma_pago_id, precio_pagado)
-                     VALUES (:u, :c, (SELECT id FROM formas_pago WHERE nombre = 'Tarjeta (Stripe)'), :p)"
-                )->execute(['u' => $usuarioId, 'c' => $cursoId, 'p' => $monto]);
+                    'INSERT INTO inscripciones (usuario_id, curso_id, forma_pago_id, precio_pagado)
+                     VALUES (:u, :c, (SELECT id FROM formas_pago WHERE nombre = :forma), :p)'
+                )->execute(['u' => $usuarioId, 'c' => $cursoId, 'p' => $monto, 'forma' => $forma]);
                 $id = $this->db->lastInsertId();
             }
 
@@ -110,8 +198,10 @@ class Inscripcion
     public function terminada(int $usuarioId, ?int $cursoId = null): ?array
     {
         $st = $this->db->prepare(
-            'SELECT i.id AS inscripcion_id, c.id AS curso_id, c.titulo, u.nombre_completo AS instructor, i.fecha_terminacion
+            'SELECT i.id AS inscripcion_id, c.id AS curso_id, c.titulo,
+                    COALESCE(d.certificado_por, u.nombre_completo) AS instructor, i.fecha_terminacion
              FROM inscripciones i JOIN cursos c ON c.id = i.curso_id JOIN usuarios u ON u.id = c.instructor_id
+             LEFT JOIN certificados d ON d.inscripcion_id = i.id
              WHERE i.usuario_id = :u AND i.completado = 1' . ($cursoId ? ' AND c.id = :c' : '') . '
              ORDER BY i.fecha_terminacion DESC, i.id DESC LIMIT 1'
         );
@@ -146,8 +236,8 @@ class Inscripcion
     public function ventasPorCurso(int $instructorId, array $f = []): array
     {
         $where = ['c.instructor_id = :ins']; $p = ['ins' => $instructorId];
-        if (!empty($f['desde'])) { $where[] = 'DATE(c.fecha_publicacion) >= :desde'; $p['desde'] = $f['desde']; }
-        if (!empty($f['hasta'])) { $where[] = 'DATE(c.fecha_publicacion) <= :hasta'; $p['hasta'] = $f['hasta']; }
+        if (!empty($f['desde'])) { $where[] = 'DATE(c.fecha_creacion) >= :desde'; $p['desde'] = $f['desde']; }
+        if (!empty($f['hasta'])) { $where[] = 'DATE(c.fecha_creacion) <= :hasta'; $p['hasta'] = $f['hasta']; }
         if (!empty($f['categoria'])) {
             $where[] = 'EXISTS (SELECT 1 FROM curso_categoria x WHERE x.curso_id = c.id AND x.categoria_id = :cat)';
             $p['cat'] = (int) $f['categoria'];
@@ -155,7 +245,7 @@ class Inscripcion
         if (!empty($f['activos'])) $where[] = 'c.activo = 1';
 
         $st = $this->db->prepare(
-            'SELECT c.id AS curso_id, c.titulo, c.activo, c.fecha_publicacion,
+            'SELECT c.id AS curso_id, c.titulo, c.activo, c.fecha_creacion,
                     (SELECT COUNT(*) FROM niveles n WHERE n.curso_id = c.id) AS total_niveles,
                     COUNT(i.id) AS alumnos,
                     COALESCE(SUM(i.precio_pagado), 0) AS ingresos,
@@ -165,8 +255,8 @@ class Inscripcion
              LEFT JOIN (SELECT inscripcion_id, COUNT(*) AS vistos FROM avance_niveles GROUP BY inscripcion_id) av
                     ON av.inscripcion_id = i.id
              WHERE ' . implode(' AND ', $where) . '
-             GROUP BY c.id, c.titulo, c.activo, c.fecha_publicacion
-             ORDER BY c.fecha_publicacion DESC'
+             GROUP BY c.id, c.titulo, c.activo, c.fecha_creacion
+             ORDER BY c.fecha_creacion DESC'
         );
         $st->execute($p);
         return $st->fetchAll();

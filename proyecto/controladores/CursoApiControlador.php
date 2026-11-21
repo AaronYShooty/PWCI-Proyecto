@@ -11,25 +11,32 @@ class CursoApiControlador extends ApiControlador
     private ?Curso $cursos = null;
     private ?Categoria $categorias = null;
 
-    public function __construct(private Conexion $conexion) {}
+    public function __construct(private Conexion $conexion, private PortadaCurso $portadas) {}
 
     public function atender(string $metodo, ?string $id): void
     {
         try {
+            $multipart = strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) === 'multipart/form-data';
             if ($metodo === 'GET') {
                 $id === null ? $this->listar() : $this->detalle($id);
                 return;
             }
             if ($metodo === 'POST' && $id === null) {
-                $this->crear();
+                $this->crear($multipart);
+                return;
+            }
+            if ($metodo === 'POST' && $id !== null && $multipart) {
+                $this->modificar('PATCH', $id, true);
                 return;
             }
             if ($id !== null && in_array($metodo, ['PUT', 'PATCH', 'DELETE'], true)) {
                 $this->modificar($metodo, $id);
                 return;
             }
-            header($id === null ? 'Allow: GET, POST' : 'Allow: GET, PUT, PATCH, DELETE');
+            header($id === null ? 'Allow: GET, POST' : 'Allow: GET, POST, PUT, PATCH, DELETE');
             $this->fallo('Método no permitido.', 405);
+        } catch (DomainException $e) {
+            $this->fallo($e->getMessage(), 409);
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $this->fallo('Error interno del servidor.', 500);
@@ -60,9 +67,9 @@ class CursoApiControlador extends ApiControlador
         $this->exito('Consulta realizada correctamente', $curso);
     }
 
-    private function crear(): void
+    private function crear(bool $multipart): void
     {
-        $cuerpo = $this->leerJson();
+        $cuerpo = $this->leerDatosCurso($multipart);
         if ($cuerpo === null) return;
 
         $errores = $this->validarCurso($cuerpo, false);
@@ -71,13 +78,25 @@ class CursoApiControlador extends ApiControlador
             return;
         }
 
-        $datos = $this->normalizar($cuerpo, true) + ['instructor_id' => (int) $_SESSION['usuario']['id']];
-        $id = $this->cursos()->crear($datos);
+        if (($cuerpo['activo'] ?? false) === true) {
+            $this->fallo('Crea el curso como borrador y agrega sus videos antes de publicarlo.', 409);
+            return;
+        }
+        $datos = $this->normalizar($cuerpo, true) + ['instructor_id' => (int) $_SESSION['usuario']['id'], 'activo' => false];
+        $portada = $multipart ? $this->guardarPortada() : null;
+        if ($multipart && $portada === null) return;
+        if ($portada !== null) $datos['imagen'] = $portada;
+        try {
+            $id = $this->cursos()->crear($datos);
+        } catch (Throwable $e) {
+            if ($portada !== null) $this->portadas->descartar($portada);
+            throw $e;
+        }
 
         $this->exito('Curso creado correctamente', $this->cursos()->obtenerPorId($id, false), 201);
     }
 
-    private function modificar(string $metodo, string $id): void
+    private function modificar(string $metodo, string $id, bool $multipart = false): void
     {
         $numero = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $curso = $numero === false ? null : $this->cursos()->obtenerPorId($numero, false);
@@ -98,11 +117,11 @@ class CursoApiControlador extends ApiControlador
             return;
         }
 
-        $cuerpo = $this->leerJson();
+        $cuerpo = $this->leerDatosCurso($multipart);
         if ($cuerpo === null) return;
 
         $parcial = $metodo === 'PATCH';
-        if ($parcial && !array_intersect(self::CAMPOS, array_keys($cuerpo))) {
+        if ($parcial && !$multipart && !array_intersect(self::CAMPOS, array_keys($cuerpo))) {
             $this->fallo('Envía al menos un campo a modificar.', 400);
             return;
         }
@@ -113,8 +132,44 @@ class CursoApiControlador extends ApiControlador
             return;
         }
 
-        $this->cursos()->actualizar($numero, $this->normalizar($cuerpo, !$parcial));
+        $datos = $this->normalizar($cuerpo, !$parcial);
+        $portada = $multipart ? $this->guardarPortada() : null;
+        if ($multipart && $portada === null) return;
+        if ($portada !== null) $datos['imagen'] = $portada;
+        try {
+            $this->cursos()->actualizar($numero, $datos);
+        } catch (Throwable $e) {
+            if ($portada !== null) $this->portadas->descartar($portada);
+            throw $e;
+        }
         $this->exito('Curso actualizado correctamente', $this->cursos()->obtenerPorId($numero, false));
+    }
+
+    private function leerDatosCurso(bool $multipart): ?array
+    {
+        if (!$multipart) return $this->leerJson();
+
+        $datos = $_POST['datos'] ?? null;
+        if (!is_string($datos)) {
+            $this->fallo('No se recibió el formulario del curso. Revisa el tamaño del banner.', 400);
+            return null;
+        }
+        $token = $_POST['csrf'] ?? null;
+        if (empty($_SESSION['csrf']) || !is_string($token) || !hash_equals($_SESSION['csrf'], $token)) {
+            $this->fallo('La sesión del formulario expiró. Recarga la página.', 403);
+            return null;
+        }
+        return $this->leerObjetoJson($datos);
+    }
+
+    private function guardarPortada(): ?string
+    {
+        try {
+            return $this->portadas->guardar($_FILES['portada'] ?? []);
+        } catch (DomainException $e) {
+            $this->fallo('Revisa el banner del curso.', 400, ['portada' => $e->getMessage()]);
+            return null;
+        }
     }
 
     private function validarCurso(array $d, bool $parcial): array
@@ -136,8 +191,9 @@ class CursoApiControlador extends ApiControlador
 
         $precio = $d['precio'] ?? null;
         if ($aplica('precio')
-            && ((!is_int($precio) && !is_float($precio)) || $precio < 0 || $precio > 99999999.99 || round($precio, 2) != $precio)) {
-            $errores['precio'] = 'Obligatorio: número entre 0 y 99999999.99 con máximo dos decimales (0 es gratis).';
+            && ((!is_int($precio) && !is_float($precio)) || $precio < 0 || ($precio > 0 && $precio < 10)
+                || $precio > 999999.99 || round($precio, 2) != $precio)) {
+            $errores['precio'] = 'Usa 0 para un curso gratis o un precio entre $10.00 y $999,999.99 MXN.';
         }
 
         $categorias = $d['categorias'] ?? null;
@@ -182,8 +238,6 @@ class CursoApiControlador extends ApiControlador
 
         if (array_key_exists('activo', $c)) {
             $datos['activo'] = $c['activo'];
-        } elseif ($conDefectos) {
-            $datos['activo'] = true;
         }
 
         return $datos;
@@ -229,7 +283,7 @@ class CursoApiControlador extends ApiControlador
             $errores['fecha_fin'] = 'No puede ser anterior a fecha_inicio.';
         }
 
-        $pagina = $this->entero($q, 'pagina', 1, PHP_INT_MAX, $errores) ?? 1;
+        $pagina = $this->entero($q, 'pagina', 1, self::ID_MAX, $errores) ?? 1;
         $porPagina = $this->entero($q, 'por_pagina', 1, self::POR_PAGINA_MAX, $errores) ?? self::POR_PAGINA;
 
         $orden = 'recientes';

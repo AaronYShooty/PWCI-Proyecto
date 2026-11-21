@@ -1,0 +1,13 @@
+$kind: http-request
+url: http://localhost:3000/api/reportes/ventas-por-distribuidor
+method: GET
+queryParams:
+  - key: desde
+    value: 2026-11-01
+    disabled: true
+    description: ""
+  - key: hasta
+    value: 2026-11-10
+    disabled: true
+    description: ""
+order: 1000
